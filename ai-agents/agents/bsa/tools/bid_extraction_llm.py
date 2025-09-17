@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from openai import AsyncOpenAI
 import os
+import logging
 from dataclasses import dataclass
 
 @dataclass
@@ -24,10 +25,31 @@ class ExtractionResult:
     confidence_score: float
     extraction_reasoning: str
 
-# Configure OpenAI client
-client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+logger = logging.getLogger(__name__)
 
-async def extract_quote_from_document_llm(document_text: str, bid_card_context: dict) -> dict:
+
+def _get_openai_client() -> Optional[AsyncOpenAI]:
+    """Create an AsyncOpenAI client when an API key is available."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("OPENAI_API_KEY not configured; LLM extraction will use fallbacks")
+        return None
+
+    try:
+        return AsyncOpenAI(api_key=api_key)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Failed to initialize AsyncOpenAI client: %s", exc)
+        return None
+
+
+DEFAULT_OPENAI_CLIENT = _get_openai_client()
+
+async def extract_quote_from_document_llm(
+    document_text: str,
+    bid_card_context: dict,
+    *,
+    openai_client: Optional[AsyncOpenAI] = None,
+) -> dict:
     """
     Extract bid details from document text using OpenAI GPT-4o intelligent analysis.
     
@@ -80,6 +102,13 @@ ACCURACY IS CRITICAL: This data will be used for real bid submissions. Ensure TO
 
     try:
         # Call OpenAI GPT-4o for intelligent extraction
+        client = openai_client or DEFAULT_OPENAI_CLIENT
+        if client is None:
+            logger.info("LLM extraction unavailable; returning fallback result")
+            fallback_result = await _fallback_extraction(document_text)
+            fallback_result["llm_error"] = "OPENAI_API_KEY not configured"
+            return fallback_result
+
         response = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -122,15 +151,18 @@ ACCURACY IS CRITICAL: This data will be used for real bid submissions. Ensure TO
         return extracted
         
     except Exception as e:
-        print(f"LLM extraction failed: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error("LLM extraction failed: %s", e)
         # Fallback to basic document analysis if LLM fails
         fallback_result = await _fallback_extraction(document_text)
         fallback_result["llm_error"] = str(e)
         return fallback_result
 
-async def extract_quote_with_context_awareness(document_text: str, bid_card_context: dict) -> dict:
+async def extract_quote_with_context_awareness(
+    document_text: str,
+    bid_card_context: dict,
+    *,
+    openai_client: Optional[AsyncOpenAI] = None,
+) -> dict:
     """
     Enhanced extraction with project context awareness.
     
@@ -166,6 +198,17 @@ Return the same JSON format as before, but with context-aware confidence scores.
 """
 
     try:
+        client = openai_client or DEFAULT_OPENAI_CLIENT
+        if client is None:
+            logger.info("Context-aware extraction unavailable; using fallback extraction")
+            fallback_result = await extract_quote_from_document_llm(
+                document_text,
+                bid_card_context,
+                openai_client=openai_client,
+            )
+            fallback_result["context_aware_error"] = "OPENAI_API_KEY not configured"
+            return fallback_result
+
         response = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -208,15 +251,23 @@ Return the same JSON format as before, but with context-aware confidence scores.
         return extracted
         
     except Exception as e:
-        print(f"Context-aware extraction failed: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error("Context-aware extraction failed: %s", e)
         # Fallback to basic LLM extraction
-        fallback_result = await extract_quote_from_document_llm(document_text, bid_card_context)
+        fallback_result = await extract_quote_from_document_llm(
+            document_text,
+            bid_card_context,
+            openai_client=openai_client,
+        )
         fallback_result["context_aware_error"] = str(e)
         return fallback_result
 
-async def parse_verbal_bid_llm(conversation: str, bid_card_id: str, contractor_context: dict) -> dict:
+async def parse_verbal_bid_llm(
+    conversation: str,
+    bid_card_id: str,
+    contractor_context: dict,
+    *,
+    openai_client: Optional[AsyncOpenAI] = None,
+) -> dict:
     """
     Parse bid details from verbal conversation using LLM intelligence.
     """
@@ -241,6 +292,21 @@ Return the standard JSON extraction format.
 """
 
     try:
+        client = openai_client or DEFAULT_OPENAI_CLIENT
+        if client is None:
+            logger.info("Verbal bid parsing unavailable; returning fallback result")
+            return {
+                "bid_card_id": bid_card_id,
+                "contractor_id": contractor_context.get("contractor_id"),
+                "contractor_name": contractor_context.get("company_name", "Contractor"),
+                "bid_amount": None,
+                "timeline_days": None,
+                "materials_included": False,
+                "proposal": conversation[:500],
+                "submission_method": "bsa_verbal_fallback",
+                "error": "OPENAI_API_KEY not configured",
+            }
+
         response = await client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -278,7 +344,7 @@ Return the standard JSON extraction format.
         return parsed
         
     except Exception as e:
-        print(f"Verbal bid parsing failed: {e}")
+        logger.error("Verbal bid parsing failed: %s", e)
         return {
             "bid_card_id": bid_card_id,
             "contractor_id": contractor_context.get("contractor_id"),
@@ -403,10 +469,19 @@ async def _fallback_extraction(document_text: str) -> dict:
     }
 
 # Maintain compatibility with existing API
-async def extract_quote_from_document(document_text: str, bid_card_context: dict) -> dict:
+async def extract_quote_from_document(
+    document_text: str,
+    bid_card_context: dict,
+    *,
+    openai_client: Optional[AsyncOpenAI] = None,
+) -> dict:
     """
     Main extraction function - now uses LLM intelligence instead of regex.
     
     This maintains API compatibility while providing intelligent extraction.
     """
-    return await extract_quote_with_context_awareness(document_text, bid_card_context)
+    return await extract_quote_with_context_awareness(
+        document_text,
+        bid_card_context,
+        openai_client=openai_client,
+    )
