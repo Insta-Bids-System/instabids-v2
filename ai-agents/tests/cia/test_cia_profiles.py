@@ -81,6 +81,9 @@ async def test_handle_conversation_app_profile_loads_user_context(monkeypatch):
     assert dummy_db.saved_state is not None
     assert dummy_db.saved_state.get("profile") == "app"
     assert result["profile_used"] == "app"
+    assert agent.client.calls, "OpenAI client should be called"
+    app_tools = {tool["function"]["name"] for tool in agent.client.calls[-1]["tools"]}
+    assert app_tools == {"update_bid_card", "categorize_project"}
 
 
 @pytest.mark.asyncio
@@ -111,6 +114,9 @@ async def test_handle_conversation_landing_profile_skips_user_context(monkeypatc
     assert dummy_db.saved_state is not None
     assert dummy_db.saved_state.get("profile") == "landing"
     assert result["profile_used"] == "landing"
+    assert agent.client.calls, "OpenAI client should be called"
+    landing_tools = {tool["function"]["name"] for tool in agent.client.calls[-1]["tools"]}
+    assert landing_tools == {"update_bid_card"}
 
 
 def test_get_system_prompt_varies_by_profile(monkeypatch):
