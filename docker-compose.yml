@@ -9,9 +9,9 @@ services:
     environment:
       - DOCKER_ENV=true
       - VITE_API_URL=http://instabids-backend:8008
-      - VITE_SUPABASE_URL=https://xrhgrthdcaymxuqcgrmj.supabase.co
-      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
-      - VITE_GOOGLE_PLACES_API_KEY=AIzaSyBacJk_H4rpExmLiG1g8-nAGZJbSgC3IaA
+      - VITE_SUPABASE_URL=${SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - VITE_GOOGLE_PLACES_API_KEY=${GOOGLE_PLACES_API_KEY}
     volumes:
       # Only keep node_modules volume, remove source bind mount
       - /app/node_modules
@@ -42,14 +42,13 @@ services:
     ports:
       - "8008:8008"
     environment:
-      - SUPABASE_URL=https://xrhgrthdcaymxuqcgrmj.supabase.co
-      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
-      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
-      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXJ1cWNncm1qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzY1NzIwNiwiZXhwIjoyMDY5MjMzMjA2fQ.fgpckT-bt2B1m9jFP6mkFZLqkicRuXGRhawHYOKjXJw
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - GOOGLE_MAPS_API_KEY=AIzaSyBacJk_H4rpExmLiG1g8-nAGZJbSgC3IaA
-      - TAVILY_API_KEY=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
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
       - REDIS_URL=redis://redis:6379
       - USE_DEEPAGENTS_LANDING=true
     # Add volume mount for live code updates
