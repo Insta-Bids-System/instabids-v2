@@ -9,7 +9,7 @@ import os
 import json
 import asyncio
 from datetime import datetime
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Literal
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
@@ -180,13 +180,14 @@ class ChatResponse(BaseModel):
 class SSEChatRequest(BaseModel):
     messages: list
     conversation_id: str
-    user_id: str
+    user_id: Optional[str] = None
     max_tokens: Optional[int] = 500
     model_preference: Optional[str] = "gpt-5"
     project_id: Optional[str] = None  # Support project context
     rfi_context: Optional[dict] = None  # Support RFI context
     images: Optional[list[str]] = None  # Support image uploads
     session_id: Optional[str] = None  # Support session tracking
+    profile: Literal["landing", "app"] = "landing"
 
 class IrisProjectProposal(BaseModel):
     user_id: str
@@ -306,7 +307,9 @@ async def cia_universal_stream(request: SSEChatRequest):
     
     async def generate_universal_sse_stream():
         try:
-            logger.info("Starting universal SSE stream generation")
+            logger.info(
+                f"Starting universal SSE stream generation for profile={request.profile}"
+            )
             
             # Extract user info with enhanced session handling
             if not request.user_id or request.user_id == "00000000-0000-0000-0000-000000000000":
@@ -444,7 +447,11 @@ async def cia_universal_stream(request: SSEChatRequest):
             else:
                 existing_state = None
                 logger.info(f"Starting new conversation for session {session_id}")
-            
+
+            # Ensure profile is tracked in existing state for downstream consumers
+            if existing_state is not None and isinstance(existing_state, dict):
+                existing_state["profile"] = request.profile
+
             # Enhance state with context
             if existing_state and bid_card_context:
                 existing_state["bid_card_context"] = bid_card_context
@@ -566,7 +573,9 @@ async def cia_universal_stream(request: SSEChatRequest):
                         user_id=user_id,
                         message=latest_message,
                         session_id=session_id,
-                        project_id=project_id
+                        conversation_id=request.conversation_id,
+                        project_id=project_id,
+                        profile=request.profile,
                     ),
                     timeout=120.0  # Timeout for GPT-4o processing
                 )
@@ -660,7 +669,7 @@ async def cia_universal_stream(request: SSEChatRequest):
             logger.info("Sending [DONE] marker to complete stream")
             yield "data: [DONE]\n\n"
             logger.info("Stream completed with [DONE] marker")
-    
+
     return StreamingResponse(
         generate_universal_sse_stream(),
         media_type="text/event-stream",
@@ -672,3 +681,31 @@ async def cia_universal_stream(request: SSEChatRequest):
             "Access-Control-Allow-Headers": "Content-Type, Authorization"
         }
     )
+
+
+@router.post("/landing/stream")
+async def cia_landing_stream(request: SSEChatRequest):
+    """Profile-specific endpoint for anonymous landing page conversations."""
+
+    try:
+        profiled_request = request.model_copy(update={"profile": "landing"})
+    except AttributeError:  # Pydantic v1 fallback
+        profiled_request = request.copy(update={"profile": "landing"})
+    return await cia_universal_stream(profiled_request)
+
+
+@router.post("/app/stream")
+async def cia_app_stream(request: SSEChatRequest):
+    """Profile-specific endpoint for authenticated in-app conversations."""
+
+    if not request.user_id or request.user_id == "00000000-0000-0000-0000-000000000000":
+        raise HTTPException(
+            status_code=400,
+            detail="Authenticated conversations require a valid user_id",
+        )
+
+    try:
+        profiled_request = request.model_copy(update={"profile": "app"})
+    except AttributeError:  # Pydantic v1 fallback
+        profiled_request = request.copy(update={"profile": "app"})
+    return await cia_universal_stream(profiled_request)

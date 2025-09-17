@@ -102,6 +102,13 @@ class CustomerInterfaceAgent:
             # Tool 2: Project categorization tool (CRITICAL FOR CONTRACTOR MATCHING!)
             get_categorization_tool()
         ]
+
+        # Cache the allowed tool names for each supported profile so we can filter quickly.
+        self._profile_allowed_tool_names = {
+            "landing": {"update_bid_card"},
+            # App profile can use every tool defined above.
+            "app": {tool["function"]["name"] for tool in self.tools if tool.get("function")},
+        }
     
     async def handle_conversation(
         self,
@@ -119,6 +126,7 @@ class CustomerInterfaceAgent:
         bid_card_error: Optional[str] = None
         bid_card_id: Optional[str] = None
         try:
+            profile = (profile or "landing").lower()
             logger.info(f"CIA handling conversation with profile: {profile}")
             
             # 1. PROFILE-BASED MEMORY LOADING
@@ -166,14 +174,10 @@ class CustomerInterfaceAgent:
             messages = self._build_messages(context, message, previous_messages, profile)
             
             # 6. PROFILE-BASED TOOL FILTERING - RE-ENABLED FOR FIELD EXTRACTION
-            if profile == "landing":
-                # LANDING PROFILE: Enable field extraction tools
-                available_tools = self.tools  # Re-enabled for field extraction
-                logger.info("Landing profile - tools enabled for field extraction")
-            else:
-                # APP PROFILE: Enable full tools
-                available_tools = self.tools  # Re-enabled for field extraction
-                logger.info(f"App profile - tools enabled for field extraction")
+            available_tools = self._get_tools_for_profile(profile)
+            logger.info(
+                f"{profile} profile - tools enabled: {[tool['function']['name'] for tool in available_tools]}"
+            )
             
             # 7. Call OpenAI with profile-filtered tools - RE-ENABLED
             logger.info(f"Calling OpenAI GPT-4o with {len(available_tools)} tools for field extraction")
@@ -434,7 +438,25 @@ class CustomerInterfaceAgent:
                 "bid_card_created": bool(bid_card_id),
                 "bid_card_error": bid_card_error
             }
-    
+
+    def _get_tools_for_profile(self, profile: str) -> List[Dict[str, Any]]:
+        """Return the OpenAI tool definitions allowed for the given profile."""
+
+        profile_key = (profile or "landing").lower()
+        allowed_names = self._profile_allowed_tool_names.get(
+            profile_key,
+            self._profile_allowed_tool_names["landing"],
+        )
+
+        filtered_tools = [
+            tool
+            for tool in self.tools
+            if tool.get("function", {}).get("name") in allowed_names
+        ]
+
+        # Fallback: if configuration mismatch filters out everything, keep default tools.
+        return filtered_tools or self.tools
+
     def _extract_context_from_history(self, previous_messages: List[Dict]) -> Dict[str, Any]:
         """Extract key information from conversation history to prevent redundant questions"""
         logger.info(f"🔍 EXTRACTING CONTEXT from {len(previous_messages)} previous messages")
