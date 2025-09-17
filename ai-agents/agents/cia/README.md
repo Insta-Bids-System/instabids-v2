@@ -223,28 +223,15 @@ SUPABASE_KEY=eyJ...  # Your Supabase anon key
 
 ## Testing
 
-Run the comprehensive test suite:
+Run the lightweight, fully stubbed test suite (no external services required):
 ```bash
-# From Docker (recommended - has configured API keys)
-docker-compose exec instabids-backend python tests/cia/test_clean_cia_real.py
-
-# From local environment
-cd ai-agents && python tests/cia/test_clean_cia_real.py
-
-# Conversation continuity test
-docker-compose exec instabids-backend python tests/cia/test_conversation_continuity.py
+pytest ai-agents/tests/cia/test_customer_interface_agent.py
 ```
 
-**✅ ALL TESTS PASSING**: API keys fixed and working in Docker environment.
-
-**Test Suite Includes**:
-- ✅ Emergency extraction scenarios
-- ✅ Normal project conversations  
-- ✅ Memory persistence across sessions
-- ✅ Multi-project awareness
-- ✅ Real-time bid card updates
-- ✅ 3-turn conversation continuity (RESTORED)
-- ✅ Database integration verification
+These tests inject stubbed OpenAI clients, in-memory stores, and mock bid-card managers so they are
+safe to execute locally without any API keys or Supabase credentials. **Do not** run the legacy
+`tests/cia/test_clean_cia_real.py` or related scripts—those still expect real services and can fail
+in local environments.
 
 ## Comparison to Old System
 
