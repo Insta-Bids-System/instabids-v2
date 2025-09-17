@@ -306,48 +306,13 @@ class GooglePlacesOptimized:
     
     async def _calculate_search_area(self, location: Dict[str, Any], 
                                     radius_miles: float) -> Dict[str, Any]:
-        """Calculate search area rectangle or circle from location"""
-        # Convert miles to meters
-        radius_meters = radius_miles * 1609.34
+        """Calculate search area using national geocoding service"""
+        # Use the geocoding service for accurate nationwide coverage
+        from geocoding_service import GeocodingService
+        geocoder = GeocodingService()
         
-        # If we have lat/lng, use it
-        if location.get("lat") and location.get("lng"):
-            return {
-                "circle": {
-                    "center": {
-                        "latitude": location["lat"],
-                        "longitude": location["lng"]
-                    },
-                    "radius": radius_meters
-                }
-            }
-        
-        # Otherwise, create a rough rectangle from ZIP
-        # This is simplified - in production you'd use a geocoding service
-        # For now, create a square around estimated center
-        zip_code = location.get("zip", "")
-        
-        # Example for Florida ZIPs (simplified)
-        if zip_code.startswith("334"):  # Boca Raton area
-            center_lat = 26.3683
-            center_lng = -80.1289
-        elif zip_code.startswith("328"):  # Orlando area
-            center_lat = 28.5383
-            center_lng = -81.3792
-        else:
-            # Default fallback
-            center_lat = 27.6648
-            center_lng = -81.5158
-        
-        # Create rectangle (rough approximation)
-        lat_offset = radius_miles / 69  # ~69 miles per degree latitude
-        lng_offset = radius_miles / (69 * 0.86)  # Adjust for latitude
-        
-        return {
-            "rectangle": {
-                "low": {
-                    "latitude": center_lat - lat_offset,
-                    "longitude": center_lng - lng_offset
+        # Delegate to geocoding service
+        return geocoder.calculate_search_area(location, radius_miles)
                 },
                 "high": {
                     "latitude": center_lat + lat_offset,

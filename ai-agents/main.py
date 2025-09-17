@@ -493,6 +493,19 @@ async def track_bid_card_conversion(request: Request):
         logger.error(f"Error tracking bid card conversion: {str(e)}")
         return {"success": False, "error": str(e)}
 
+@app.get("/api/docker-test")
+async def docker_test():
+    """TEST ENDPOINT - Proves Docker uses local files instantly"""
+    import os
+    return {
+        "message": "UPDATED at 6:06 AM - Docker sees this INSTANTLY!",
+        "running_in": "Docker container on port 8008",
+        "file_location": "C:\\Users\\Not John Or Justin\\Documents\\instabids\\ai-agents\\main.py",
+        "instant_update": "YES - Docker sees this immediately without restart!",
+        "openai_key_ends_with": os.getenv("OPENAI_API_KEY", "")[-4:] if os.getenv("OPENAI_API_KEY") else "NOT SET",
+        "timestamp": datetime.now().isoformat()
+    }
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8008"))

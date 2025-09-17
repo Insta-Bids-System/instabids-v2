@@ -87,6 +87,8 @@ class IntelligentContractorDiscovery:
             "total_discovered": 0
         }
         
+        search_round = 0  # Initialize search round counter
+        
         try:
             # Use optimized Google Places discovery
             logger.info(f"[OPTIMIZED] Starting batch discovery for {project_type} in {location.get('city', 'Unknown')}")

@@ -18,6 +18,8 @@ from agents.cda.service_specific_matcher import ServiceSpecificMatcher
 from agents.cda.tier1_matcher_v2 import Tier1Matcher
 from agents.cda.tier2_reengagement import Tier2Reengagement
 from agents.cda.web_search_agent import WebSearchContractorAgent
+from agents.cda.enhanced_web_search_agent import EnhancedWebSearchAgent
+from agents.cda.adaptive_discovery import AdaptiveDiscoverySystem
 
 
 class ContractorDiscoveryAgent:
@@ -40,12 +42,14 @@ class ContractorDiscoveryAgent:
 
         self.intelligent_matcher = None  # Legacy matcher disabled
         self.web_search = WebSearchContractorAgent(self.supabase)
+        self.enhanced_web_search = EnhancedWebSearchAgent(self.supabase)  # New 66-field system
         self.tier1_matcher = Tier1Matcher(self.supabase)
         self.tier2_reengagement = Tier2Reengagement(self.supabase)
+        self.adaptive_discovery = AdaptiveDiscoverySystem()  # Radius expansion system
 
-        print("[CDA v2] Initialized with enhanced service-specific matching")
+        print("[CDA v2] Initialized with enhanced service-specific matching and adaptive discovery")
 
-    def discover_contractors(self, bid_card_id: str, contractors_needed: int = 5, radius_miles: int = 15) -> dict[str, Any]:
+    async def discover_contractors(self, bid_card_id: str, contractors_needed: int = 5, radius_miles: int = 15) -> dict[str, Any]:
         """
         Main CDA function with intelligent matching and radius-based search
 
@@ -155,19 +159,50 @@ class ContractorDiscoveryAgent:
             else:
                 print(f"[CDA v2] No previous contacts found within {radius_miles} miles")
 
-            # Tier 3: Web search for new contractors with radius search
+            # Tier 3: Enhanced web search with adaptive radius expansion
             if len(all_contractors) < contractors_to_find:  # Get the full amount we need
-                print(f"[CDA v2] Searching Tier 3: Web search for new contractors within {radius_miles} miles...")
+                print(f"[CDA v2] Searching Tier 3: Enhanced web search with adaptive radius expansion...")
                 # Search for remaining contractors needed
                 remaining_needed = contractors_to_find - len(all_contractors)
-                web_results = self.web_search.discover_contractors_for_bid(
-                    bid_card_id,
-                    contractors_needed=remaining_needed,
-                    radius_miles=radius_miles
+                
+                # Use adaptive discovery with automatic radius expansion
+                async def discovery_wrapper(location_dict, radius):
+                    """Wrapper to make the discovery function compatible with adaptive discovery"""
+                    try:
+                        enhanced_results = await self.enhanced_web_search.discover_contractors_with_profiles(
+                            bid_card_id=bid_card_id,
+                            project_type=project_type,
+                            location=location_dict,
+                            contractors_needed=remaining_needed,
+                            radius_miles=radius
+                        )
+                        if enhanced_results["success"]:
+                            return enhanced_results["contractors"]
+                    except:
+                        # Fallback to regular web search if enhanced fails
+                        web_results = self.web_search.discover_contractors_for_bid(
+                            bid_card_id,
+                            contractors_needed=remaining_needed,
+                            radius_miles=radius
+                        )
+                        if web_results["success"]:
+                            return web_results["contractors"]
+                    return []
+                
+                # Use adaptive discovery with radius expansion
+                discovery_result = await self.adaptive_discovery.discover_with_expansion(
+                    discovery_function=discovery_wrapper,
+                    location=location,
+                    target_count=remaining_needed,
+                    min_acceptable=max(1, remaining_needed // 2)  # Accept at least half
                 )
-                if web_results["success"] and web_results["contractors"]:
-                    all_contractors.extend(web_results["contractors"])
-                    print(f"[CDA v2] Found {len(web_results['contractors'])} new contractors via web search")
+                
+                if discovery_result["contractors"]:
+                    all_contractors.extend(discovery_result["contractors"])
+                    print(f"[CDA v2] Found {len(discovery_result['contractors'])} contractors via adaptive discovery")
+                    print(f"[CDA v2] Final radius used: {discovery_result['final_radius']} miles")
+                    if discovery_result["expansion_stages"] > 1:
+                        print(f"[CDA v2] Expanded search {discovery_result['expansion_stages'] - 1} times")
 
             # Remove duplicates
             unique_contractors = self._deduplicate_contractors(all_contractors)

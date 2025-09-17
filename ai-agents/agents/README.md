@@ -139,23 +139,30 @@ CIA → Potential Bid Cards: Real-time field tracking
 - **Before**: 15-45 seconds, 15+ DB queries
 - **After**: 2-5 seconds, 2-5 DB queries
 
-### 4. **CDA** - Contractor Discovery Agent
+### 4. **CDA** - Contractor Discovery Agent (v3 - Unified)
 **Location**: `agents/cda/`  
-**Status**: ✅ OPERATIONAL (Claude Opus 4 Intelligence)  
-**Purpose**: Intelligent contractor matching and discovery  
+**Status**: ✅ OPERATIONAL (Enhanced with 66-field profiles)  
+**Purpose**: Unified contractor discovery with adaptive radius expansion  
 **Key Features**:
-- Claude Opus 4 for nuanced matching decisions
-- Service-specific matching algorithms
-- 3-tier contractor classification
-- Web search integration for contractor discovery
+- **66-field comprehensive contractor profiles** (vs old 10-field)
+- **National geocoding coverage** (replaced Florida-only)
+- **Adaptive radius expansion** (15→25→40→60→100 miles)
+- **Tavily website enrichment** for deep business insights
+- **3-tier discovery process** with intelligent fallback
+- **Async operations** for parallel searches
 
-**Component Architecture** (10+ files):
-- `agent.py` - Main CDA coordinator ✅
-- `service_specific_matcher.py` - Project-specific matching ✅
-- `tier1_matcher_v2.py` - High-value contractor matching ✅  
-- `tier2_reengagement.py` - Re-engagement campaigns ✅
-- `web_search_agent.py` - Live contractor discovery ✅
-- `email_discovery_agent.py` - Email extraction ✅
+**Component Architecture** (15+ files):
+- `agent.py` - Main CDA coordinator (async, 3-tier) ✅
+- `enhanced_web_search_agent.py` - Google Places + 66-field profiles ✅
+- `complete_profile_builder.py` - Comprehensive profiling system ✅
+- `adaptive_discovery.py` - Multi-stage radius expansion ✅
+- `geocoding_service.py` - National ZIP-to-coordinates ✅
+- `tavily_search.py` - Website content extraction ✅
+- `contractor_website_analyzer.py` - Deep website analysis ✅
+- `service_specific_matcher.py` - GPT-4 intelligent matching ✅
+- `tier1_matcher_v2.py` - Internal DB matching ✅  
+- `tier2_reengagement.py` - Previous contacts ✅
+- `web_search_agent.py` - Basic fallback ✅
 
 ### 5. **COIA** - Contractor Onboarding Intelligence Agent
 **Location**: `agents/coia/`  
