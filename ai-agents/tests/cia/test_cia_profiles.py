@@ -182,7 +182,7 @@ def test_router_profile_endpoints(monkeypatch):
             assert response.status_code == 200
             assert "[DONE]" in body
 
-        landing_payload = {**payload, "user_id": "00000000-0000-0000-0000-000000000000"}
+        landing_payload = {k: v for k, v in payload.items() if k != "user_id"}
         with client.stream("POST", "/api/cia/landing/stream", json=landing_payload) as response:
             body = "".join(list(response.iter_text()))
             assert response.status_code == 200

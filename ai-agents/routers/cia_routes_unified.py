@@ -180,7 +180,7 @@ class ChatResponse(BaseModel):
 class SSEChatRequest(BaseModel):
     messages: list
     conversation_id: str
-    user_id: str
+    user_id: Optional[str] = None
     max_tokens: Optional[int] = 500
     model_preference: Optional[str] = "gpt-5"
     project_id: Optional[str] = None  # Support project context
