@@ -422,6 +422,54 @@ async def admin_login(request: Request):
         logger.error(f"Error in admin login: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
+# System health endpoint
+@app.get("/api/system/health")
+async def system_health():
+    """Comprehensive system health check"""
+    import psutil
+    from datetime import datetime
+    
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "services": {
+            "backend": "running",
+            "database": "unknown",
+            "redis": "unknown"
+        },
+        "system": {
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage('/').percent
+        },
+        "version": "1.0.0"
+    }
+    
+    # Check database
+    try:
+        from supabase import create_client
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_ANON_KEY")
+        if supabase_url and supabase_key:
+            client = create_client(supabase_url, supabase_key)
+            # Simple query to test connection
+            result = client.table("profiles").select("id").limit(1).execute()
+            health_status["services"]["database"] = "connected"
+    except:
+        health_status["services"]["database"] = "disconnected"
+        health_status["status"] = "degraded"
+    
+    # Check Redis
+    try:
+        import redis
+        r = redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
+        r.ping()
+        health_status["services"]["redis"] = "connected"
+    except:
+        health_status["services"]["redis"] = "disconnected"
+    
+    return health_status
+
 # Tracking endpoints for external landing page
 @app.post("/api/track/bid-card-click")
 async def track_bid_card_click(request: Request):
