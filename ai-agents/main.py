@@ -140,6 +140,7 @@ try:
     
     # Initialize CIA agent - OpenAI GPT-5 only
     from agents.cia.agent import CustomerInterfaceAgent
+    from agents.cia.potential_bid_card_integration import PotentialBidCardManager
     from routers.cia_routes_unified import set_cia_agent  # Fixed streaming endpoint enabled
     
     # Initialize JAA agent
@@ -155,7 +156,8 @@ try:
     
     if openai_api_key:
         # Use OpenAI GPT-5 exclusively
-        cia_agent = CustomerInterfaceAgent(openai_api_key)
+        potential_bid_card_manager = PotentialBidCardManager()
+        cia_agent = CustomerInterfaceAgent(openai_api_key, bid_card_manager=potential_bid_card_manager)
         set_cia_agent(cia_agent)  # Fixed streaming endpoint enabled
         logger.info("CIA agent initialized successfully with OpenAI GPT-5 API key")
     else:

@@ -7,6 +7,7 @@ import logging
 from typing import Dict, Any, Optional, List
 
 from .google_api.places import GooglePlacesTool
+from .google_api.licenses import LicenseSearchTool
 from .web_research.tavily import TavilySearchTool
 from .database.contractors import ContractorDatabaseTool
 from .database.bid_cards import BidCardSearchTool
@@ -27,6 +28,7 @@ class COIATools(BaseTool):
         
         # Initialize all specialized tools
         self.google_places = GooglePlacesTool()
+        self.license_search = LicenseSearchTool()
         self.tavily_search = TavilySearchTool()
         self.contractor_db = ContractorDatabaseTool()
         self.bid_card_search = BidCardSearchTool()
@@ -145,4 +147,4 @@ class COIATools(BaseTool):
 
 
 # Export the main class
-__all__ = ['COIATools']
+__all__ = ["COIATools"]

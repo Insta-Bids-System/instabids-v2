@@ -12,14 +12,16 @@ logger = logging.getLogger(__name__)
 
 class MyBidsTracker:
     """Tracks and manages contractor's bid card interactions"""
-    
-    def __init__(self):
-        self.supabase = get_client()
+
+    def __init__(self, supabase_client=None):
+        self.supabase = supabase_client if supabase_client is not None else get_client()
+        if not self.supabase:
+            logger.warning("Supabase client unavailable; MyBidsTracker operating in no-op mode")
     
     async def track_bid_interaction(
-        self, 
-        contractor_id: str, 
-        bid_card_id: str, 
+        self,
+        contractor_id: str,
+        bid_card_id: str,
         interaction_type: str,
         details: Optional[Dict[str, Any]] = None
     ) -> bool:
@@ -35,6 +37,13 @@ class MyBidsTracker:
         Returns:
             True if successfully tracked
         """
+        if not self.supabase:
+            logger.info(
+                "Skipping bid interaction tracking for %s (Supabase unavailable)",
+                contractor_id,
+            )
+            return False
+
         try:
             # Check if already tracked
             existing = self.supabase.table('contractor_my_bids').select('*').eq(
@@ -124,7 +133,7 @@ class MyBidsTracker:
             return False
     
     async def get_contractor_my_bids(
-        self, 
+        self,
         contractor_id: str,
         include_full_details: bool = True
     ) -> List[Dict[str, Any]]:
@@ -138,6 +147,13 @@ class MyBidsTracker:
         Returns:
             List of bid cards in contractor's "My Bids" section
         """
+        if not self.supabase:
+            logger.info(
+                "Returning empty My Bids for %s (Supabase unavailable)",
+                contractor_id,
+            )
+            return []
+
         try:
             # Get all tracked bid interactions
             my_bids = self.supabase.table('contractor_my_bids').select('*').eq(
@@ -207,6 +223,18 @@ class MyBidsTracker:
         Returns:
             Complete interaction history and context
         """
+        if not self.supabase:
+            logger.info(
+                "Returning empty interaction context for %s (Supabase unavailable)",
+                contractor_id,
+            )
+            return {
+                'has_interaction': False,
+                'messages': [],
+                'proposals': [],
+                'questions': [],
+            }
+
         try:
             context = {
                 'has_interaction': False,

@@ -9,9 +9,15 @@ from typing import Dict, Any, List, Optional
 import logging
 import asyncio
 from datetime import datetime
+from importlib import util
+from pathlib import Path
 
-# Add deepagents-system to path
-sys.path.insert(0, r'C:\Users\Not John Or Justin\Documents\instabids\deepagents-system\src')
+# Ensure the DeepAgents package is importable without relying on workstation-specific paths.
+if util.find_spec("deepagents") is None:  # pragma: no cover - best-effort fallback
+    repo_root = Path(__file__).resolve().parents[3]
+    deepagents_src = repo_root / "deepagents-system" / "src"
+    if deepagents_src.exists():
+        sys.path.insert(0, str(deepagents_src))
 
 # Import DeepAgents framework
 from deepagents import create_deep_agent
@@ -575,7 +581,11 @@ async def bsa_deepagent_stream(
     message: str,
     conversation_history: List[Dict] = None,
     session_id: str = None,
-    bid_card_id: str = None
+    bid_card_id: str = None,
+    *,
+    supabase_db: Optional[SupabaseDB] = None,
+    contractor_context_adapter: Optional[ContractorContextAdapter] = None,
+    my_bids_service=None,
 ):
     """
     Stream responses using OPTIMIZED DeepAgents with singleton graph
@@ -596,9 +606,24 @@ async def bsa_deepagent_stream(
     thread_id = BSASingleton.get_thread_id(contractor_id, session_id)
     logger.info(f"BSA Optimized: Using thread_id={thread_id}")
     
-    # Initialize systems for context loading
-    db = SupabaseDB()
-    contractor_adapter = ContractorContextAdapter()
+    # Initialize systems for context loading (allow dependency injection for tests)
+    if supabase_db is not None:
+        db = supabase_db
+    else:
+        try:
+            db = SupabaseDB()
+        except ValueError as exc:
+            logger.warning(
+                "BSA DeepAgents: Supabase not configured - continuing without persistence: %s",
+                exc,
+            )
+            db = None
+        except Exception as exc:  # pragma: no cover - defensive
+            logger.error("BSA DeepAgents: Unexpected Supabase error: %s", exc)
+            db = None
+
+    contractor_adapter = contractor_context_adapter or ContractorContextAdapter()
+    bids_tracker = my_bids_service or my_bids_tracker
     # REMOVED: ContractorAIMemory - using unified memory only
     # ai_memory = ContractorAIMemory()
     
@@ -622,10 +647,13 @@ async def bsa_deepagent_stream(
     ai_memory_context = {}  # Empty for now
     
     # OPTIMIZATION: Cache My Bids context
-    my_bids_context = await bsa_context_cache.get_my_bids(
-        contractor_id=contractor_id,
-        loader_func=lambda: my_bids_tracker.load_full_my_bids_context(contractor_id)
-    )
+    if bids_tracker and hasattr(bids_tracker, "load_full_my_bids_context"):
+        my_bids_context = await bsa_context_cache.get_my_bids(
+            contractor_id=contractor_id,
+            loader_func=lambda: bids_tracker.load_full_my_bids_context(contractor_id)
+        )
+    else:
+        my_bids_context = {}
     
     # Log cache stats for monitoring
     cache_stats = bsa_context_cache.get_stats()
@@ -880,7 +908,7 @@ async def bsa_deepagent_stream(
     }
     
     # Save conversation to memory (KEEP ALL EXISTING SAVES)
-    if full_response:
+    if full_response and db and hasattr(db, "save_unified_conversation"):
         # Save to unified conversation (EXISTING)
         await db.save_unified_conversation({
             "user_id": contractor_id,
@@ -904,8 +932,8 @@ async def bsa_deepagent_stream(
         # )
         
         # Track bid card interaction if mentioned (EXISTING)
-        if bid_card_id:
-            await my_bids_tracker.track_bid_interaction(
+        if bid_card_id and bids_tracker and hasattr(bids_tracker, "track_bid_interaction"):
+            await bids_tracker.track_bid_interaction(
                 contractor_id=contractor_id,
                 bid_card_id=bid_card_id,
                 interaction_type='deepagent_conversation',
