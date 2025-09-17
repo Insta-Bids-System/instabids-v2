@@ -1,0 +1,194 @@
+[
+  {
+    "table_name": "admin_activity_log",
+    "columns": [
+      { "column_name": "id", "data_type": "integer", "is_nullable": "NO", "column_default": "nextval('admin_activity_log_id_seq'::regclass)" },
+      { "column_name": "admin_user_id", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "action", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "details", "data_type": "jsonb", "is_nullable": "YES", "column_default": null },
+      { "column_name": "timestamp", "data_type": "timestamp with time zone", "is_nullable": "YES", "column_default": "CURRENT_TIMESTAMP" },
+      { "column_name": "ip_address", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "session_id", "data_type": "text", "is_nullable": "YES", "column_default": null }
+    ]
+  },
+  {
+    "table_name": "admin_sessions",
+    "columns": [
+      { "column_name": "session_id", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "admin_user_id", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "created_at", "data_type": "timestamp with time zone", "is_nullable": "YES", "column_default": "CURRENT_TIMESTAMP" },
+      { "column_name": "expires_at", "data_type": "timestamp with time zone", "is_nullable": "NO", "column_default": null },
+      { "column_name": "last_activity", "data_type": "timestamp with time zone", "is_nullable": "YES", "column_default": "CURRENT_TIMESTAMP" },
+      { "column_name": "ip_address", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "user_agent", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "is_active", "data_type": "boolean", "is_nullable": "YES", "column_default": "true" }
+    ]
+  },
+  {
+    "table_name": "admin_users",
+    "columns": [
+      { "column_name": "id", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "email", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "full_name", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "role", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "permissions", "data_type": "ARRAY", "is_nullable": "NO", "column_default": "'{}'::text[]" },
+      { "column_name": "password_hash", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "created_at", "data_type": "timestamp with time zone", "is_nullable": "YES", "column_default": "CURRENT_TIMESTAMP" },
+      { "column_name": "last_login", "data_type": "timestamp with time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "is_active", "data_type": "boolean", "is_nullable": "YES", "column_default": "true" }
+    ]
+  },
+  {
+    "table_name": "bid_card_distributions",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "contractor_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "sent_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "method", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "unique_url", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "opened_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "first_opened_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "open_count", "data_type": "integer", "is_nullable": "YES", "column_default": "0" },
+      { "column_name": "last_activity_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "responded_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "response_type", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "response_message", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "created_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "updated_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" }
+    ]
+  },
+  {
+    "table_name": "bid_card_documents",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "name", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "url", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "type", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "size", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "upload_date", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "created_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" }
+    ]
+  },
+  {
+    "table_name": "bid_card_engagement_events",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "view_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "event_type", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "event_target", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "event_value", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "occurred_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" }
+    ]
+  },
+  {
+    "table_name": "bid_card_images",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "url", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "thumbnail_url", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "caption", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "is_primary", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" },
+      { "column_name": "upload_date", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "created_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" }
+    ]
+  },
+  {
+    "table_name": "bid_card_messages",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "bid_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "sender_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "sender_type", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "recipient_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "recipient_type", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "content", "data_type": "text", "is_nullable": "NO", "column_default": null },
+      { "column_name": "is_read", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" },
+      { "column_name": "read_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "thread_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "reply_to_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "created_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "updated_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" }
+    ]
+  },
+  {
+    "table_name": "bid_card_views",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "bid_card_id", "data_type": "uuid", "is_nullable": "NO", "column_default": null },
+      { "column_name": "contractor_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "visitor_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "viewed_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "duration_seconds", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "referrer_url", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "utm_source", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "utm_medium", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "utm_campaign", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "user_agent", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "ip_address", "data_type": "inet", "is_nullable": "YES", "column_default": null },
+      { "column_name": "device_type", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "browser", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "scroll_depth", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "clicks_count", "data_type": "integer", "is_nullable": "YES", "column_default": "0" },
+      { "column_name": "form_started", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" },
+      { "column_name": "form_completed", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" }
+    ]
+  },
+  {
+    "table_name": "bid_cards",
+    "columns": [
+      { "column_name": "id", "data_type": "uuid", "is_nullable": "NO", "column_default": "gen_random_uuid()" },
+      { "column_name": "cia_thread_id", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "bid_card_number", "data_type": "character varying", "is_nullable": "NO", "column_default": null },
+      { "column_name": "project_type", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "urgency_level", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "complexity_score", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "contractor_count_needed", "data_type": "integer", "is_nullable": "YES", "column_default": "3" },
+      { "column_name": "budget_min", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "budget_max", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "bid_document", "data_type": "jsonb", "is_nullable": "YES", "column_default": null },
+      { "column_name": "requirements_extracted", "data_type": "jsonb", "is_nullable": "YES", "column_default": null },
+      { "column_name": "status", "data_type": "character varying", "is_nullable": "YES", "column_default": "'generated'::character varying" },
+      { "column_name": "created_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "updated_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": "now()" },
+      { "column_name": "public_token", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "external_url", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "landing_page_active", "data_type": "boolean", "is_nullable": "YES", "column_default": "true" },
+      { "column_name": "title", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "description", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "timeline_start", "data_type": "date", "is_nullable": "YES", "column_default": null },
+      { "column_name": "timeline_end", "data_type": "date", "is_nullable": "YES", "column_default": null },
+      { "column_name": "timeline_flexibility", "data_type": "character varying", "is_nullable": "YES", "column_default": "'flexible'::character varying" },
+      { "column_name": "location_address", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "location_city", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "location_state", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "location_zip", "data_type": "character varying", "is_nullable": "YES", "column_default": null },
+      { "column_name": "location_lat", "data_type": "numeric", "is_nullable": "YES", "column_default": null },
+      { "column_name": "location_lng", "data_type": "numeric", "is_nullable": "YES", "column_default": null },
+      { "column_name": "categories", "data_type": "ARRAY", "is_nullable": "YES", "column_default": null },
+      { "column_name": "requirements", "data_type": "ARRAY", "is_nullable": "YES", "column_default": null },
+      { "column_name": "preferred_schedule", "data_type": "ARRAY", "is_nullable": "YES", "column_default": null },
+      { "column_name": "visibility", "data_type": "character varying", "is_nullable": "YES", "column_default": "'public'::character varying" },
+      { "column_name": "group_bid_eligible", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" },
+      { "column_name": "group_bid_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "bid_count", "data_type": "integer", "is_nullable": "YES", "column_default": "0" },
+      { "column_name": "interested_contractors", "data_type": "integer", "is_nullable": "YES", "column_default": "0" },
+      { "column_name": "bid_deadline", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "auto_close_after_bids", "data_type": "integer", "is_nullable": "YES", "column_default": null },
+      { "column_name": "allows_questions", "data_type": "boolean", "is_nullable": "YES", "column_default": "true" },
+      { "column_name": "requires_bid_before_message", "data_type": "boolean", "is_nullable": "YES", "column_default": "false" },
+      { "column_name": "published_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "metadata", "data_type": "jsonb", "is_nullable": "YES", "column_default": "'{}'::jsonb" },
+      { "column_name": "homeowner_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "homeowner_name", "data_type": "text", "is_nullable": "YES", "column_default": null },
+      { "column_name": "winner_contractor_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "winner_selected_at", "data_type": "timestamp without time zone", "is_nullable": "YES", "column_default": null },
+      { "column_name": "connection_fee_id", "data_type": "uuid", "is_nullable": "YES", "column_default": null },
+      { "column_name": "winner_bid_amount", "data_type": "numeric", "is_nullable": "YES", "column_default": null }
+    ]
+  }
+]

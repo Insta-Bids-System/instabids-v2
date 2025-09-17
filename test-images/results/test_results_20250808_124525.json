@@ -1,0 +1,42 @@
+[
+  {
+    "config_num": 1,
+    "config_name": "Config 1: Minimal change, preserve everything",
+    "init_strength": 0.15,
+    "guidance_scale": 9,
+    "url": "https://cdn.leonardo.ai/users/b2218a13-e06c-48f2-8aa2-735055cc30c7/generations/1b42c91d-26eb-4366-bff8-9664a1ae593c/Leonardo_Creative_Replace_only_the_patchy_grass_areas_with_per_0.jpg",
+    "timestamp": "2025-08-08T12:44:19.001179"
+  },
+  {
+    "config_num": 2,
+    "config_name": "Config 2: Slightly stronger, texture focus",
+    "init_strength": 0.2,
+    "guidance_scale": 8,
+    "url": "https://cdn.leonardo.ai/users/b2218a13-e06c-48f2-8aa2-735055cc30c7/generations/98249a38-7f2d-4fab-b926-af1ada6f83c6/Leonardo_Creative_Transform_the_lawn_to_lush_artificial_turf_w_0.jpg",
+    "timestamp": "2025-08-08T12:44:35.469891"
+  },
+  {
+    "config_num": 3,
+    "config_name": "Config 3: Balanced transformation",
+    "init_strength": 0.25,
+    "guidance_scale": 7,
+    "url": "https://cdn.leonardo.ai/users/b2218a13-e06c-48f2-8aa2-735055cc30c7/generations/2fff8fd2-5cb9-4b1d-91cf-3334c7943958/Leonardo_Creative_Professional_artificial_turf_installation_re_0.jpg",
+    "timestamp": "2025-08-08T12:44:52.151534"
+  },
+  {
+    "config_num": 4,
+    "config_name": "Config 4: Stronger with detail emphasis",
+    "init_strength": 0.3,
+    "guidance_scale": 6,
+    "url": "https://cdn.leonardo.ai/users/b2218a13-e06c-48f2-8aa2-735055cc30c7/generations/800deb0c-932c-411e-afe4-cb217b0272bf/Leonardo_Creative_Highend_artificial_turf_transformation_of_ba_0.jpg",
+    "timestamp": "2025-08-08T12:45:08.641303"
+  },
+  {
+    "config_num": 5,
+    "config_name": "Config 5: Maximum quality focus",
+    "init_strength": 0.35,
+    "guidance_scale": 7,
+    "url": "https://cdn.leonardo.ai/users/b2218a13-e06c-48f2-8aa2-735055cc30c7/generations/28111c86-076a-4636-8e5b-91d9204409f4/Leonardo_Creative_Luxury_artificial_turf_installation_emerald_0.jpg",
+    "timestamp": "2025-08-08T12:45:25.144480"
+  }
+]

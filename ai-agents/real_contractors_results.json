@@ -1,0 +1,121 @@
+[
+  {
+    "company_name": "JM Holiday Lighting Inc",
+    "website": "https://jmholidaylighting.com/",
+    "phone": "(954) 482-6800",
+    "address": "5051 NW 13th Ave, Ste G, Pompano Beach, FL 33064",
+    "services": "Professional Holiday, Christmas and Hanukkah light installation",
+    "service_area": "All of South Florida including Miami, Fort Lauderdale, Palm Beach",
+    "source": "Google Search + BBB Profile",
+    "enrichment": {
+      "enrichment_complete": true,
+      "page_title": "Holiday Lighting South Florida | JM Holiday Lighting Inc",
+      "content_length": 9442,
+      "service_scope": "regional",
+      "has_fleet": false,
+      "has_warehouse": true,
+      "has_insurance": false,
+      "has_employees": true,
+      "commercial_focus": true,
+      "about_snippet": "about a thing!\nwe service:\npalm beach, west palm beach, lake worth, greenacres, wellington, royal palm beach, boca raton, delray beach, boynton beach, lantana, sunrise, plantation, fort lauderdale, la"
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Warriors for Light",
+    "website": "https://www.warriorsforlight.com/fl/deerfield-beach/",
+    "phone": "(888) 930-3450",
+    "services": "Turn-key Christmas light installation with maintenance",
+    "features": "Fully insured, online booking, free repairs",
+    "source": "Google Search",
+    "enrichment": {
+      "enrichment_complete": true,
+      "page_title": "#1 Holiday Lights Installation in Deerfield Beach, FL | Insured + Guaranteed",
+      "content_length": 6892,
+      "service_scope": "local",
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_insurance": true,
+      "has_employees": true,
+      "commercial_focus": true,
+      "about_snippet": "about the lights not working with our maintenance assurance. if the lights don't work or a bulb is out, just give us a call. we\u2019ll happily come out to replace lights or make adjustments. we want your "
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Rizzo's Holiday Lighting",
+    "website": "https://rizzosholidaylighting.com/",
+    "phone": "Not found in search",
+    "services": "Concierge-style holiday lighting",
+    "service_area": "Parkland, Deerfield Beach, South Palm Beach County",
+    "source": "Google Search",
+    "enrichment": {
+      "enrichment_complete": true,
+      "page_title": "Professional Christmas Lights Installation Services",
+      "content_length": 8561,
+      "service_scope": "regional",
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_insurance": false,
+      "has_employees": true,
+      "commercial_focus": true,
+      "about_snippet": "about our commercial lighting options!\u00a0do you offer any other services?yes! we also offer permanent landscape lighting services! call today for your estimate!  professional christmas & holiday lightin"
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Reindeer Bros",
+    "website": "https://reindeerbros.com/christmas-light-installation/deerfield-beach-fl/",
+    "phone": "Not found in search",
+    "minimum": "$1,500 minimum",
+    "services": "Commercial-grade LED lighting, 24-48 hour response time",
+    "source": "Google Search",
+    "enrichment": {
+      "enrichment_complete": true,
+      "page_title": "Christmas Light Installation West Palm Beach FL | Reindeer Bros",
+      "content_length": 12455,
+      "service_scope": "national",
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_insurance": true,
+      "has_employees": true,
+      "commercial_focus": true,
+      "about_snippet": "about\n\nabout us\ncareers\nfaq\n\n\nchristmas light installation\n\nboca raton fl\nboynton beach fl\ndelray beach fl\nparkland fl\nwest palm beach fl\n+ surrounding!\n\n\ncommercial\nservice area\ngallery\nblog\ncontact\n"
+    },
+    "size_category": "regional_company"
+  },
+  {
+    "company_name": "Christmas Lights by Amco",
+    "website": "https://christmaslightsbyamco.com/florida/broward-county/christmas-light-installers-deerfield-beach-fl/",
+    "phone": "Not found in search",
+    "services": "Expert Christmas light installation for businesses and homes",
+    "features": "Design consultation, takedown and storage services",
+    "source": "Google Search",
+    "enrichment": {
+      "enrichment_complete": true,
+      "page_title": "Holiday Lighting Services in Deerfield Beach, Florida",
+      "content_length": 9867,
+      "service_scope": "regional",
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_insurance": false,
+      "has_employees": true,
+      "commercial_focus": true,
+      "about_snippet": "about uscontact usreserve nownew jerseysouth floridamenuservicesholiday lightingresidentialcommerciallandscape lightingpermanent lightingevent decoratingservice areasabout uscontact usnew jerseysouth "
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Real Tree Trimming & Landscaping Inc",
+    "website": "https://www.realtreeteam.com/christmas-light-installation-hanging",
+    "phone": "Not found in search",
+    "services": "Tree service for 30 years, also Christmas light installation",
+    "service_area": "Palm Beach County & Broward",
+    "source": "Google Search",
+    "enrichment": {
+      "enrichment_complete": false,
+      "error": "HTTP 403"
+    },
+    "size_category": "small_business"
+  }
+]

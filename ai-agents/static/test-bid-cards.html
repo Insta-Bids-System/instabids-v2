@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid Card System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .bid-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .bid-card h3 {
+            margin-top: 0;
+            color: #2c5aa0;
+        }
+        .bid-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .bid-info div {
+            padding: 5px;
+            background: #e8f0fe;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        button {
+            background: #2c5aa0;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1e3d6f;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            padding: 10px;
+            background: #fee;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            color: green;
+            padding: 10px;
+            background: #efe;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>InstaBids - Bid Card System Test</h1>
+        
+        <div class="test-section">
+            <h2>API Test</h2>
+            <button onclick="testAPI()">Test Bid Card Search API</button>
+            <button onclick="createTestData()">Create Test Bid Cards</button>
+            <div id="api-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Sample Bid Cards</h2>
+            <div id="bid-cards"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Homeowner View</h2>
+            <div class="bid-card">
+                <h3>Kitchen Renovation Project</h3>
+                <p>Complete kitchen remodel including cabinets, countertops, and appliances.</p>
+                <div class="bid-info">
+                    <div><strong>Budget:</strong> $25,000 - $45,000</div>
+                    <div><strong>Timeline:</strong> 2 months</div>
+                    <div><strong>Location:</strong> Los Angeles, CA</div>
+                </div>
+                <div class="bid-info">
+                    <div><strong>Status:</strong> Active</div>
+                    <div><strong>Bids Received:</strong> 5</div>
+                    <div><strong>Messages:</strong> 3 unread</div>
+                </div>
+                <button>Edit Bid Card</button>
+                <button>View Bids</button>
+                <button>Messages</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Contractor View</h2>
+            <div class="bid-card">
+                <h3>Bathroom Remodel - Master Suite</h3>
+                <p>Looking for experienced contractor for master bathroom renovation.</p>
+                <div class="bid-info">
+                    <div><strong>Budget:</strong> $15,000 - $25,000</div>
+                    <div><strong>Timeline:</strong> 1 month</div>
+                    <div><strong>Distance:</strong> 5.2 miles</div>
+                </div>
+                <div class="bid-info">
+                    <div><strong>Match Score:</strong> 92%</div>
+                    <div><strong>Current Bids:</strong> 3</div>
+                    <div><strong>Categories:</strong> Plumbing, Tiling</div>
+                </div>
+                <button>Submit Bid</button>
+                <button>Ask Question</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>Testing API...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8008/api/bid-cards/search');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <strong>API Test Successful!</strong><br>
+                            Found ${data.total || 0} bid cards<br>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                    displayBidCards(data.bid_cards || []);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <strong>API Error:</strong> ${data.detail || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Connection Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function createTestData() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>Creating test data...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8008/api/bid-cards/test-data', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <strong>Test Data Created!</strong><br>
+                            ${data.message}
+                        </div>
+                    `;
+                    // Refresh the search
+                    testAPI();
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <strong>Error:</strong> ${data.detail || data.error || 'Unknown error'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Connection Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayBidCards(bidCards) {
+            const container = document.getElementById('bid-cards');
+            
+            if (bidCards.length === 0) {
+                container.innerHTML = '<p>No bid cards found. Try creating test data first.</p>';
+                return;
+            }
+            
+            container.innerHTML = bidCards.map(card => `
+                <div class="bid-card">
+                    <h3>${card.title}</h3>
+                    <p>${card.description}</p>
+                    <div class="bid-info">
+                        <div><strong>Budget:</strong> $${card.budget_range.min.toLocaleString()} - $${card.budget_range.max.toLocaleString()}</div>
+                        <div><strong>Location:</strong> ${card.location.city}, ${card.location.state}</div>
+                        <div><strong>Bids:</strong> ${card.bid_count}</div>
+                    </div>
+                    <div class="bid-info">
+                        <div><strong>Type:</strong> ${card.project_type}</div>
+                        <div><strong>Status:</strong> ${card.status}</div>
+                        <div><strong>Categories:</strong> ${card.categories.join(', ')}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Test on page load
+        window.onload = () => {
+            console.log('Testing Bid Card System...');
+            testAPI();
+        };
+    </script>
+</body>
+</html>

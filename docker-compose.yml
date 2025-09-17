@@ -1,0 +1,136 @@
+services:
+  # InstaBids Frontend (Single source of truth)
+  instabids-frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - DOCKER_ENV=true
+      - VITE_API_URL=http://instabids-backend:8008
+      - VITE_SUPABASE_URL=https://xrhgrthdcaymxuqcgrmj.supabase.co
+      - VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
+      - VITE_GOOGLE_PLACES_API_KEY=AIzaSyBacJk_H4rpExmLiG1g8-nAGZJbSgC3IaA
+    volumes:
+      # Only keep node_modules volume, remove source bind mount
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - instabids-network
+    develop:
+      watch:
+        - action: sync
+          path: ./web
+          target: /app
+          ignore:
+            - node_modules/
+            - dist/
+            - .git/
+            - .vite/
+        - action: rebuild
+          path: ./web/package.json
+        - action: rebuild
+          path: ./web/package-lock.json
+
+  # InstaBids Backend (FastAPI + AI Agents)
+  instabids-backend:
+    build:
+      context: ./ai-agents
+      dockerfile: Dockerfile
+    ports:
+      - "8008:8008"
+    environment:
+      - SUPABASE_URL=https://xrhgrthdcaymxuqcgrmj.supabase.co
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
+      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXJ1cWNncm1qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzY1NzIwNiwiZXhwIjoyMDY5MjMzMjA2fQ.fgpckT-bt2B1m9jFP6mkFZLqkicRuXGRhawHYOKjXJw
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_MAPS_API_KEY=AIzaSyBacJk_H4rpExmLiG1g8-nAGZJbSgC3IaA
+      - TAVILY_API_KEY=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
+      - REDIS_URL=redis://redis:6379
+      - USE_DEEPAGENTS_LANDING=true
+    # Add volume mount for live code updates
+    volumes:
+      - ./ai-agents:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8008 --reload
+    restart: unless-stopped
+    networks:
+      - instabids-network
+    depends_on:
+      - supabase
+      - redis
+    develop:
+      watch:
+        - action: sync
+          path: ./ai-agents
+          target: /app
+          ignore:
+            - __pycache__/
+            - .git/
+            - .pytest_cache/
+        - action: rebuild
+          path: ./ai-agents/requirements.txt
+
+  # PostgreSQL Database (Supabase Compatible)
+  supabase:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=your-super-secret-and-long-postgres-password
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - instabids-network
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - instabids-network
+    volumes:
+      - redis-data:/data
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8080:8080"  # Web UI
+    restart: unless-stopped
+    networks:
+      - instabids-network
+
+  # Playwright Testing Container
+  playwright-tests:
+    build:
+      context: ./web
+      dockerfile: Dockerfile.playwright
+    volumes:
+      - ./web:/app
+      - ./test-results:/app/test-results
+    networks:
+      - instabids-network
+    depends_on:
+      - instabids-frontend
+      - instabids-backend
+    profiles:
+      - testing
+
+networks:
+  instabids-network:
+    driver: bridge
+
+volumes:
+  supabase-data:
+  redis-data:

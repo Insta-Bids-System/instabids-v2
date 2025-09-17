@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "generatedAt": "2025-08-11T15:10:00-04:00",
+  "notes": [
+    "Static, code-derived map for quick navigation and ownership.",
+    "Router-level prefixes may be applied in main.py include_router (see ContextSnapshot.json).",
+    "dbTablesInferred is conservative; verify against supabase migrations."
+  ],
+  "routers": [
+    {
+      "file": "ai-agents/routers/intelligent_messaging_api.py",
+      "includePrefix": "/api/intelligent-messages",
+      "endpoints": [
+        { "method": "GET", "path": "/health", "fn": "health_check" },
+        { "method": "POST", "path": "/send", "fn": "send_intelligent_message" },
+        { "method": "POST", "path": "/send-with-image", "fn": "send_message_with_image" },
+        { "method": "GET", "path": "/agent-comments/{user_type}/{user_id}", "fn": "get_agent_comments" },
+        { "method": "GET", "path": "/security-analysis/{bid_card_id}", "fn": "get_security_analysis" },
+        { "method": "POST", "path": "/notify-contractors-scope-change", "fn": "notify_contractors_scope_change" },
+        { "method": "POST", "path": "/respond-to-scope-change-question", "fn": "respond_to_scope_change_question" },
+        { "method": "GET", "path": "/scope-change-notifications/{contractor_id}", "fn": "get_scope_change_notifications" },
+        { "method": "POST", "path": "/test-security", "fn": "test_security_analysis" }
+      ],
+      "dbTablesInferred": [
+        "conversations",
+        "messaging_system_messages",
+        "message_attachments",
+        "blocked_messages_log",
+        "agent_comments",
+        "bid_cards"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/messaging_api.py",
+      "includePrefix": "(file-defined or app default)",
+      "endpoints": [
+        { "method": "GET", "path": "/health", "fn": "health_check" },
+        { "method": "POST", "path": "/send", "fn": "send_message" },
+        { "method": "POST", "path": "/broadcast", "fn": "send_broadcast_message" },
+        { "method": "GET", "path": "/conversations/{bid_card_id}", "fn": "get_conversations" },
+        { "method": "GET", "path": "/conversation/{conversation_id}/messages", "fn": "get_messages" },
+        { "method": "POST", "path": "/mark-read", "fn": "mark_messages_read" },
+        { "method": "GET", "path": "/broadcast/{broadcast_id}/status", "fn": "get_broadcast_status" },
+        { "method": "POST", "path": "/broadcast/{broadcast_id}/mark-read", "fn": "mark_broadcast_read" },
+        { "method": "GET", "path": "/unread-count", "fn": "get_unread_count" }
+      ],
+      "dbTablesInferred": [
+        "conversations",
+        "messaging_system_messages",
+        "broadcast_messages",
+        "broadcast_read_receipts"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/bid_card_api.py",
+      "includePrefix": "/api/bid-cards",
+      "endpoints": [
+        { "method": "POST", "path": "", "fn": "create_bid_card" },
+        { "method": "PUT", "path": "/{bid_card_id}", "fn": "update_bid_card" },
+        { "method": "DELETE", "path": "/{bid_card_id}", "fn": "delete_bid_card" },
+        { "method": "GET", "path": "/homeowner", "fn": "get_homeowner_bid_cards" },
+        { "method": "GET", "path": "/search", "fn": "search_bid_cards" },
+        { "method": "GET", "path": "/by-token/{token}", "fn": "get_bid_card_by_token" },
+        { "method": "GET", "path": "/{bid_card_id}/contractor-view", "fn": "get_bid_card_contractor_view" },
+        { "method": "POST", "path": "/contractor-bids", "fn": "submit_contractor_bid" },
+        { "method": "POST", "path": "/messages", "fn": "send_bid_card_message" },
+        { "method": "GET", "path": "/{bid_card_id}/messages", "fn": "get_bid_card_messages" },
+        { "method": "PUT", "path": "/messages/{message_id}/read", "fn": "mark_message_as_read" },
+        { "method": "GET", "path": "/{bid_card_id}/unread-count", "fn": "get_unread_message_count" },
+        { "method": "POST", "path": "/{bid_card_id}/select-contractor", "fn": "select_winning_contractor" }
+      ],
+      "dbTablesInferred": [
+        "bid_cards",
+        "contractor_bids",
+        "messaging_system_messages"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/cia_routes.py",
+      "includePrefix": "/api/cia",
+      "endpoints": [
+        { "method": "GET", "path": "/conversation/{session_id}", "fn": "get_cia_conversation_history" },
+        { "method": "POST", "path": "/chat", "fn": "cia_chat" },
+        { "method": "POST", "path": "/stream", "fn": "cia_chat_stream" }
+      ],
+      "dbTablesInferred": [],
+      "usesSupabase": false
+    },
+    {
+      "file": "ai-agents/routers/coia_api_fixed.py",
+      "includePrefix": "/api/coia",
+      "endpoints": [
+        { "method": "POST", "path": "/chat", "fn": "coia_chat" },
+        { "method": "GET", "path": "/session/{session_id}", "fn": "get_session_info" },
+        { "method": "POST", "path": "/chat/stream", "fn": "coia_chat_stream" },
+        { "method": "GET", "path": "/health", "fn": "coia_health" }
+      ],
+      "dbTablesInferred": [],
+      "usesSupabase": false
+    },
+    {
+      "file": "ai-agents/routers/unified_conversation_api.py",
+      "includePrefix": "/api/conversations",
+      "endpoints": [
+        { "method": "POST", "path": "/conversations/create", "fn": "create_conversation" },
+        { "method": "POST", "path": "/conversations/message", "fn": "send_message" },
+        { "method": "POST", "path": "/conversations/memory", "fn": "store_memory" },
+        { "method": "GET", "path": "/conversations/{conversation_id}", "fn": "get_conversation" },
+        { "method": "GET", "path": "/conversations/user/{user_id}", "fn": "list_user_conversations" },
+        { "method": "POST", "path": "/conversations/migrate-session", "fn": "migrate_anonymous_session" },
+        { "method": "GET", "path": "/conversations/health", "fn": "health_check" }
+      ],
+      "dbTablesInferred": [
+        "conversations",
+        "messaging_system_messages"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/property_api.py",
+      "includePrefix": "(file-defined or app default)",
+      "endpoints": [
+        { "method": "POST", "path": "/create", "fn": "create_property" },
+        { "method": "GET", "path": "/user/{user_id}", "fn": "get_user_properties" },
+        { "method": "GET", "path": "/{property_id}", "fn": "get_property" },
+        { "method": "POST", "path": "/{property_id}/rooms", "fn": "create_room" },
+        { "method": "GET", "path": "/{property_id}/rooms", "fn": "get_property_rooms" },
+        { "method": "POST", "path": "/{property_id}/photos/upload", "fn": "upload_property_photo" },
+        { "method": "GET", "path": "/{property_id}/assets", "fn": "get_property_assets" },
+        { "method": "GET", "path": "/{property_id}/dashboard", "fn": "get_property_dashboard" },
+        { "method": "GET", "path": "/health", "fn": "health_check" }
+      ],
+      "dbTablesInferred": [
+        "properties",
+        "rooms",
+        "property_assets",
+        "property_photos"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/connection_fee_api.py",
+      "includePrefix": "(decorators include /api/connection-fees)",
+      "endpoints": [
+        { "method": "POST", "path": "/api/connection-fees/{fee_id}/pay", "fn": "process_connection_fee_payment" },
+        { "method": "GET", "path": "/api/connection-fees/contractor/{contractor_id}", "fn": "get_contractor_connection_fees" }
+      ],
+      "dbTablesInferred": [
+        "connection_fees",
+        "bid_cards",
+        "notifications",
+        "referral_tracking"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/admin_routes.py",
+      "includePrefix": "/api/admin",
+      "endpoints": [
+        { "method": "POST", "path": "/login", "fn": "admin_login" },
+        { "method": "POST", "path": "/logout", "fn": "admin_logout" },
+        { "method": "GET", "path": "/session/validate", "fn": "validate_admin_session" },
+        { "method": "GET", "path": "/session", "fn": "get_current_session" },
+        { "method": "GET", "path": "/bid-cards", "fn": "get_admin_bid_cards" },
+        { "method": "POST", "path": "/restart-agent", "fn": "restart_agent" },
+        { "method": "GET", "path": "/dashboard", "fn": "get_admin_dashboard" },
+        { "method": "GET", "path": "/bid-cards-fixed", "fn": "get_admin_bid_cards_fixed" },
+        { "method": "GET", "path": "/bid-cards/{bid_card_id}/lifecycle", "fn": "get_bid_card_lifecycle" },
+        { "method": "GET", "path": "/campaigns", "fn": "get_campaigns" },
+        { "method": "GET", "path": "/campaigns/{campaign_id}/details", "fn": "get_campaign_details" },
+        { "method": "POST", "path": "/delete-fake-contractors", "fn": "delete_fake_contractors" }
+      ],
+      "dbTablesInferred": [
+        "admin_users",
+        "admin_sessions",
+        "bid_cards",
+        "outreach_campaigns",
+        "contractor_discovery_cache",
+        "contractor_outreach_attempts",
+        "campaign_check_ins",
+        "contractors"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/agent_context_api.py",
+      "includePrefix": "/api/agent-context",
+      "endpoints": [
+        { "method": "GET", "path": "/context/{agent_type}", "fn": "get_agent_context" },
+        { "method": "POST", "path": "/cross-agent-context", "fn": "get_cross_agent_context" },
+        { "method": "POST", "path": "/messaging-context", "fn": "get_messaging_context" },
+        { "method": "POST", "path": "/filter-message", "fn": "filter_message" },
+        { "method": "GET", "path": "/conversation/{conversation_id}/access-check", "fn": "check_conversation_access" },
+        { "method": "GET", "path": "/project/{project_id}/conversations", "fn": "get_project_conversations" },
+        { "method": "GET", "path": "/user/{user_id}/cross-project-insights", "fn": "get_cross_project_insights" },
+        { "method": "GET", "path": "/privacy/policy-info", "fn": "get_privacy_policy_info" },
+        { "method": "GET", "path": "/health", "fn": "health_check" }
+      ],
+      "dbTablesInferred": [
+        "conversations",
+        "messaging_system_messages",
+        "projects"
+      ],
+      "usesSupabase": true
+    },
+    {
+      "file": "ai-agents/routers/image_upload_api.py",
+      "includePrefix": "(file-defined or app default)",
+      "endpoints": [
+        { "method": "POST", "path": "/upload/conversation", "fn": "upload_conversation_image" },
+        { "method": "POST", "path": "/upload/bid-card", "fn": "upload_bid_card_image" },
+        { "method": "GET", "path": "/conversation/{conversation_id}", "fn": "get_conversation_images" },
+        { "method": "GET", "path": "/bid-card/{bid_card_id}", "fn": "get_bid_card_images" },
+        { "method": "DELETE", "path": "/{image_path:path}", "fn": "delete_image" },
+        { "method": "GET", "path": "/health", "fn": "health_check" }
+      ],
+      "dbTablesInferred": [
+        "message_attachments",
+        "conversations",
+        "bid_cards"
+      ],
+      "usesSupabase": true
+    }
+  ]
+}

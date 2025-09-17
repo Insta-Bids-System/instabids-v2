@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Image Upload</title>
+</head>
+<body>
+    <h1>Test Image Upload to Instabids</h1>
+    <canvas id="canvas" width="400" height="300"></canvas>
+    <br>
+    <button onclick="uploadImage()">Upload Test Image</button>
+    
+    <script>
+    // Create a test image
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Draw a simple kitchen visualization
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(0, 0, 400, 300);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(50, 50, 300, 200);
+    
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(100, 100, 50, 100);
+    ctx.fillRect(250, 100, 50, 100);
+    
+    ctx.fillStyle = '#000000';
+    ctx.font = '20px Arial';
+    ctx.fillText('Test Kitchen Image', 120, 40);
+    
+    async function uploadImage() {
+        // Convert canvas to blob
+        canvas.toBlob(async (blob) => {
+            const formData = new FormData();
+            const file = new File([blob], 'test-kitchen.png', { type: 'image/png' });
+            
+            // Log what we're uploading
+            console.log('Uploading file:', file);
+            
+            // Direct upload to the ImageUploader endpoint would go here
+            // For now, let's just confirm the file is created
+            alert('Test image created: ' + file.name + ' (' + file.size + ' bytes)');
+        });
+    }
+    </script>
+</body>
+</html>

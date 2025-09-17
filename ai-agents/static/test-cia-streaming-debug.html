@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIA Streaming Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .streaming { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .response { background: #f3e5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .indicator { display: none; color: #666; font-style: italic; }
+        .indicator.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CIA Streaming Debug Test</h1>
+        
+        <div class="debug">
+            <strong>Debug Info:</strong>
+            <div>Is Streaming: <span id="isStreamingStatus">false</span></div>
+            <div>Streaming Message ID: <span id="streamingMessageId">null</span></div>
+            <div>Total Messages: <span id="totalMessages">0</span></div>
+        </div>
+        
+        <div class="indicator" id="streamingIndicator">
+            🤖 Alex is responding... (GPT-5) - This should disappear when streaming completes!
+        </div>
+        
+        <button id="testStreamingBtn" onclick="testStreaming()">Test CIA Streaming</button>
+        <button id="abortBtn" onclick="abortStream()" disabled>Abort Stream</button>
+        
+        <div id="messages"></div>
+        
+        <div class="streaming" id="streamingResponse" style="display: none;">
+            <strong>Streaming Response:</strong>
+            <div id="streamingContent"></div>
+        </div>
+        
+        <div class="response" id="finalResponse" style="display: none;">
+            <strong>Final Response:</strong>
+            <div id="finalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let isStreaming = false;
+        let streamingMessageId = null;
+        let abortController = null;
+        let currentMessage = '';
+        
+        function updateDebugInfo() {
+            document.getElementById('isStreamingStatus').textContent = isStreaming;
+            document.getElementById('streamingMessageId').textContent = streamingMessageId || 'null';
+            
+            // Show/hide streaming indicator based on isStreaming state
+            const indicator = document.getElementById('streamingIndicator');
+            if (isStreaming) {
+                indicator.classList.add('active');
+            } else {
+                indicator.classList.remove('active');
+            }
+        }
+        
+        async function testStreaming() {
+            console.log('🚀 Starting CIA streaming test...');
+            
+            // Set streaming state
+            isStreaming = true;
+            streamingMessageId = `test_${Date.now()}`;
+            currentMessage = '';
+            
+            updateDebugInfo();
+            
+            // Show streaming elements
+            document.getElementById('streamingResponse').style.display = 'block';
+            document.getElementById('finalResponse').style.display = 'none';
+            document.getElementById('testStreamingBtn').disabled = true;
+            document.getElementById('abortBtn').disabled = false;
+            
+            // Create abort controller
+            abortController = new AbortController();
+            
+            try {
+                const response = await fetch('/api/cia/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                        'Cache-Control': 'no-cache'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            { role: 'user', content: 'I need help with a small kitchen project' }
+                        ],
+                        conversation_id: 'test-debug-conversation',
+                        user_id: 'test-debug-user',
+                        max_tokens: 100
+                    }),
+                    signal: abortController.signal
+                });
+                
+                console.log('✅ Response received, starting to read stream...');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                if (!response.body) {
+                    throw new Error('No response body for streaming');
+                }
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { value, done } = await reader.read();
+                    
+                    if (done) {
+                        console.log('📖 Stream reading complete');
+                        break;
+                    }
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        console.log('🔍 Processing line:', JSON.stringify(line.substring(0, 100)));
+                        
+                        if (!line.startsWith('data: ')) {
+                            console.log('⚠️ Line does not start with "data: ", skipping');
+                            continue;
+                        }
+                        
+                        const dataContent = line.slice(6).trim();
+                        console.log('📦 Received chunk:', JSON.stringify(dataContent.substring(0, 200)));
+                        
+                        if (dataContent === '[DONE]') {
+                            console.log('🏁 Stream completed with [DONE] marker');
+                            
+                            // CRITICAL: Set streaming to false here
+                            isStreaming = false;
+                            streamingMessageId = null;
+                            
+                            updateDebugInfo();
+                            
+                            // Show final response
+                            document.getElementById('finalResponse').style.display = 'block';
+                            document.getElementById('streamingResponse').style.display = 'none';
+                            document.getElementById('finalContent').textContent = currentMessage;
+                            
+                            return; // Exit the function
+                        }
+                        
+                        try {
+                            const chunk = JSON.parse(dataContent);
+                            const deltaContent = chunk.choices?.[0]?.delta?.content || '';
+                            
+                            if (deltaContent) {
+                                currentMessage += deltaContent;
+                                document.getElementById('streamingContent').textContent = currentMessage;
+                            }
+                        } catch (parseError) {
+                            console.warn('Failed to parse chunk:', dataContent, parseError);
+                        }
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ Streaming error:', error);
+                
+                // Reset streaming state on error
+                isStreaming = false;
+                streamingMessageId = null;
+                updateDebugInfo();
+                
+                alert('Streaming failed: ' + error.message);
+            } finally {
+                // Always reset UI state
+                document.getElementById('testStreamingBtn').disabled = false;
+                document.getElementById('abortBtn').disabled = true;
+                abortController = null;
+                
+                console.log('🧹 Cleanup complete');
+            }
+        }
+        
+        function abortStream() {
+            if (abortController) {
+                console.log('🛑 Aborting stream...');
+                abortController.abort();
+                
+                isStreaming = false;
+                streamingMessageId = null;
+                updateDebugInfo();
+                
+                document.getElementById('testStreamingBtn').disabled = false;
+                document.getElementById('abortBtn').disabled = true;
+            }
+        }
+        
+        // Initialize debug info
+        updateDebugInfo();
+    </script>
+</body>
+</html>

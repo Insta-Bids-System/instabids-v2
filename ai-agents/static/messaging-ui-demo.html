@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ InstaBids Messaging Security System - Live Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .loading-dots::after {
+            content: '...';
+            animation: dots 2s infinite;
+        }
+        @keyframes dots {
+            0%, 33% { content: '.'; }
+            34%, 66% { content: '..'; }
+            67%, 100% { content: '...'; }
+        }
+        .message-animation {
+            animation: fadeInUp 0.3s ease-out;
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-4xl mx-auto p-6">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">
+                🛡️ InstaBids Intelligent Messaging System
+            </h1>
+            <p class="text-center text-gray-600 mb-4">
+                GPT-5 Powered Security Agent - Business Critical Protection System
+            </p>
+            <div class="flex justify-center space-x-4 text-sm">
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full">✅ GPT-5 Fallback Working</span>
+                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">🔍 Contact Detection Active</span>
+                <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">📋 Scope Change Detection ON</span>
+            </div>
+        </div>
+
+        <!-- Test Interface -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold mb-4">🧪 Live Testing Interface</h2>
+            
+            <!-- Quick Test Buttons -->
+            <div class="mb-4">
+                <h3 class="font-semibold mb-2">Quick Test Messages:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <button onclick="testMessage('Hi! Can you call me at 555-123-4567 to discuss?')" 
+                            class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded text-sm">
+                        📞 Contact Info Test
+                    </button>
+                    <button onclick="testMessage('Actually, let\\'s do mulch instead of rocks, and add a pergola')" 
+                            class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-2 rounded text-sm">
+                        📋 Scope Change Test
+                    </button>
+                    <button onclick="testMessage('I can install cabinets for $15,000. Timeline is 2 weeks.')" 
+                            class="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded text-sm">
+                        ✅ Legitimate Message
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="flex gap-3 mb-4">
+                <input type="text" id="messageInput" placeholder="Type your message to test..." 
+                       class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <button onclick="testMessage(document.getElementById('messageInput').value)" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    🔍 Test Security
+                </button>
+            </div>
+
+            <!-- Sender Type -->
+            <div class="mb-4">
+                <label class="inline-flex items-center mr-6">
+                    <input type="radio" name="senderType" value="contractor" checked class="form-radio text-blue-600">
+                    <span class="ml-2">👷 Contractor</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" name="senderType" value="homeowner" class="form-radio text-blue-600">
+                    <span class="ml-2">🏠 Homeowner</span>
+                </label>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                    <div>
+                        <p class="font-medium text-blue-800" id="loadingMessage">🤖 Connecting to GPT-5 Intelligent Agent...</p>
+                        <p class="text-sm text-blue-600" id="loadingTime">Processing...</p>
+                    </div>
+                </div>
+                <div id="thinkingProcess" class="mt-3 space-y-2 hidden">
+                    <div class="text-sm text-blue-700">
+                        <div id="step1" class="opacity-30">✓ Pattern matching for contact information</div>
+                        <div id="step2" class="opacity-30">✓ Analyzing conversation context</div>
+                        <div id="step3" class="opacity-30">✓ Detecting project scope changes</div>
+                        <div id="step4" class="opacity-30">⚡ Deep semantic analysis...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="resultsContainer" class="hidden bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-xl font-bold mb-4">📊 Analysis Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let loadingInterval;
+        let startTime;
+
+        function testMessage(message) {
+            if (!message.trim()) {
+                alert('Please enter a message to test');
+                return;
+            }
+
+            // Show loading state
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            
+            startTime = Date.now();
+            let elapsed = 0;
+            
+            loadingInterval = setInterval(() => {
+                elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('loadingTime').textContent = elapsed > 0 ? `Processing for ${elapsed} seconds...` : 'Processing...';
+                
+                // Update loading message based on elapsed time
+                const loadingMsg = document.getElementById('loadingMessage');
+                if (elapsed < 2) {
+                    loadingMsg.textContent = '🤖 Connecting to GPT-5 Intelligent Agent...';
+                } else if (elapsed < 4) {
+                    loadingMsg.textContent = '🔍 Analyzing message for security threats...';
+                } else if (elapsed < 6) {
+                    loadingMsg.textContent = '🛡️ Checking for contact information patterns...';
+                } else if (elapsed < 8) {
+                    loadingMsg.textContent = '📋 Detecting project scope changes...';
+                } else {
+                    loadingMsg.textContent = '💭 GPT-5 is thinking deeply about this message...';
+                }
+                
+                // Show thinking process after 5 seconds
+                if (elapsed > 5) {
+                    document.getElementById('thinkingProcess').classList.remove('hidden');
+                    if (elapsed > 6) document.getElementById('step1').classList.remove('opacity-30');
+                    if (elapsed > 7) document.getElementById('step2').classList.remove('opacity-30');
+                    if (elapsed > 8) document.getElementById('step3').classList.remove('opacity-30');
+                    if (elapsed > 9) document.getElementById('step4').classList.remove('opacity-30');
+                }
+            }, 100);
+
+            // Get sender type
+            const senderType = document.querySelector('input[name="senderType"]:checked').value;
+
+            // Make API call
+            const encodedMessage = encodeURIComponent(message);
+            fetch(`http://localhost:8008/api/intelligent-messages/test-security?test_content=${encodedMessage}`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                clearInterval(loadingInterval);
+                document.getElementById('loadingState').classList.add('hidden');
+                displayResults(data, message);
+            })
+            .catch(error => {
+                clearInterval(loadingInterval);
+                document.getElementById('loadingState').classList.add('hidden');
+                displayError(error, message);
+            });
+        }
+
+        function displayResults(data, originalMessage) {
+            const container = document.getElementById('resultsContainer');
+            const content = document.getElementById('resultsContent');
+            
+            const result = data.analysis_result;
+            const decision = result.agent_decision;
+            const approved = result.approved;
+            
+            // Decision color mapping
+            const decisionColors = {
+                'block': 'bg-red-50 border-red-200 text-red-800',
+                'redact': 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                'allow': 'bg-green-50 border-green-200 text-green-800',
+                'warn': 'bg-orange-50 border-orange-200 text-orange-800'
+            };
+            
+            let html = `
+                <!-- Decision Summary -->
+                <div class="border-2 rounded-lg p-4 mb-4 message-animation ${decisionColors[decision] || 'bg-gray-50 border-gray-200 text-gray-800'}">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-lg">🛡️ Decision: ${decision.toUpperCase()}</span>
+                        <span class="text-sm">Confidence: ${(result.confidence_score * 100).toFixed(1)}%</span>
+                    </div>
+                    <div class="text-sm">
+                        <strong>Message ${approved ? 'APPROVED' : 'BLOCKED'}</strong> for delivery
+                    </div>
+                </div>
+            `;
+            
+            // Threats detected
+            if (result.threats_detected && result.threats_detected.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">🚨 Security Threats Detected:</h4>
+                        <div class="flex flex-wrap gap-2">`;
+                result.threats_detected.forEach(threat => {
+                    html += `<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                        ${threat.replace(/_/g, ' ').toUpperCase()}
+                    </span>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // Content comparison
+            html += `
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <h4 class="font-semibold mb-2">📝 Original Content:</h4>
+                        <div class="bg-gray-100 p-3 rounded text-sm font-mono">
+                            "${originalMessage}"
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-2">✏️ Filtered Content:</h4>
+                        <div class="bg-green-50 p-3 rounded text-sm font-mono">
+                            ${result.filtered_content || '(Blocked - no content delivered)'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Agent comments
+            if (result.agent_comments && result.agent_comments.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">💬 Agent Feedback:</h4>
+                        <div class="space-y-2">`;
+                result.agent_comments.forEach(comment => {
+                    const commentColors = {
+                        'warning': 'bg-red-50 border-red-400 text-red-700',
+                        'info': 'bg-blue-50 border-blue-400 text-blue-700',
+                        'suggestion': 'bg-purple-50 border-purple-400 text-purple-700'
+                    };
+                    html += `
+                        <div class="border-l-4 p-3 rounded ${commentColors[comment.type] || 'bg-gray-50 border-gray-400 text-gray-700'}">
+                            <div class="text-xs font-medium mb-1">
+                                To: ${comment.visible_to} • Type: ${comment.type}
+                            </div>
+                            <div class="text-sm">${comment.content}</div>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            }
+            
+            // Scope changes
+            if (result.scope_changes_detected && result.scope_changes_detected.length > 0) {
+                html += `
+                    <div class="mb-4">
+                        <h4 class="font-semibold mb-2">📋 Project Scope Changes Detected:</h4>
+                        <div class="bg-yellow-50 p-3 rounded">
+                            <div class="flex flex-wrap gap-2 mb-2">`;
+                result.scope_changes_detected.forEach(change => {
+                    html += `<span class="bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
+                        ${change.replace(/_/g, ' ').toUpperCase()}
+                    </span>`;
+                });
+                html += `</div>`;
+                
+                if (result.requires_bid_update) {
+                    html += `<div class="text-sm text-yellow-800 font-medium">
+                        ⚠️ Bid update required - other contractors should be notified
+                    </div>`;
+                }
+                html += `</div></div>`;
+            }
+            
+            content.innerHTML = html;
+            container.classList.remove('hidden');
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function displayError(error, originalMessage) {
+            const container = document.getElementById('resultsContainer');
+            const content = document.getElementById('resultsContent');
+            
+            content.innerHTML = `
+                <div class="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-800 mb-2">❌ Error Testing Message</h4>
+                    <div class="text-sm text-red-700 mb-2">
+                        <strong>Original Message:</strong> "${originalMessage}"
+                    </div>
+                    <div class="text-sm text-red-600">
+                        <strong>Error:</strong> ${error.message || 'Network error - check if backend is running on port 8008'}
+                    </div>
+                    <div class="mt-2 text-xs text-red-500">
+                        Make sure the InstaBids backend is running: <code>docker-compose up -d</code>
+                    </div>
+                </div>
+            `;
+            
+            container.classList.remove('hidden');
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                testMessage(this.value);
+            }
+        });
+    </script>
+</body>
+</html>

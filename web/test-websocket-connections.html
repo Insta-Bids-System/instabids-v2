@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Connection Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status"></div>
+    <div id="connections"></div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const connectionsDiv = document.getElementById('connections');
+        
+        // Track active connections
+        const connections = [];
+        
+        function createConnection(name) {
+            try {
+                const ws = new WebSocket('ws://localhost:8008/ws/agent-activity');
+                connections.push({ name, ws, status: 'connecting' });
+                updateDisplay();
+                
+                ws.onopen = () => {
+                    console.log(`${name} connected`);
+                    const conn = connections.find(c => c.ws === ws);
+                    if (conn) conn.status = 'connected';
+                    updateDisplay();
+                };
+                
+                ws.onclose = () => {
+                    console.log(`${name} disconnected`);
+                    const conn = connections.find(c => c.ws === ws);
+                    if (conn) conn.status = 'disconnected';
+                    updateDisplay();
+                };
+                
+                ws.onerror = (error) => {
+                    console.error(`${name} error:`, error);
+                    const conn = connections.find(c => c.ws === ws);
+                    if (conn) conn.status = 'error';
+                    updateDisplay();
+                };
+            } catch (error) {
+                console.error(`Failed to create ${name}:`, error);
+            }
+        }
+        
+        function updateDisplay() {
+            statusDiv.innerHTML = `<h2>Active Connections: ${connections.filter(c => c.status === 'connected').length}</h2>`;
+            connectionsDiv.innerHTML = connections.map(c => 
+                `<p>${c.name}: <span style="color: ${c.status === 'connected' ? 'green' : c.status === 'error' ? 'red' : 'orange'}">${c.status}</span></p>`
+            ).join('');
+        }
+        
+        // Test multiple connections like the old system might have created
+        setTimeout(() => createConnection('Connection 1'), 100);
+        setTimeout(() => createConnection('Connection 2'), 200);
+        setTimeout(() => createConnection('Connection 3'), 300);
+        setTimeout(() => createConnection('Connection 4'), 400);
+        setTimeout(() => createConnection('Connection 5'), 500);
+        
+        updateDisplay();
+    </script>
+</body>
+</html>

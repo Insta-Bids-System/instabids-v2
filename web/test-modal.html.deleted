@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Potential Bid Card Modal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+        }
+        .error {
+            background: #ffebee;
+            border-color: #ef5350;
+        }
+        .success {
+            background: #e8f5e9;
+            border-color: #66bb6a;
+        }
+        button {
+            padding: 10px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .bid-card {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .bid-card h3 {
+            margin-top: 0;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4caf50;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Potential Bid Card Modal</h1>
+        
+        <div id="status" class="status">
+            Testing the simplified button implementation...
+        </div>
+
+        <div id="bid-cards-container">
+            <h2>Loading Potential Bid Cards...</h2>
+        </div>
+
+        <div id="test-actions">
+            <h2>Test Actions</h2>
+            <button onclick="testButtonClick('59737671-71f4-4c98-aa11-a295df8224db', false)">
+                Test "Complete Project Details" Button (Not Ready)
+            </button>
+            <button onclick="testButtonClick('1b779968-106a-4001-954d-9111db1ab899', true)">
+                Test "Review & Get Bids" Button (Ready)
+            </button>
+            <button onclick="directModalTest()">
+                Direct Modal Test (Opens Modal Directly)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Load and display bid cards
+        async function loadBidCards() {
+            const container = document.getElementById('bid-cards-container');
+            
+            // Simulate bid card data (in real app, this comes from API)
+            const bidCards = [
+                {
+                    id: "59737671-71f4-4c98-aa11-a295df8224db",
+                    title: "Kitchen Remodel Test",
+                    project_name: null,
+                    completion_percentage: 40,
+                    ready_for_conversion: false,
+                    status: "draft",
+                    zip_code: "33316",
+                    urgency_level: "standard"
+                },
+                {
+                    id: "1b779968-106a-4001-954d-9111db1ab899",
+                    title: "Test Project with Default Trade",
+                    project_name: null,
+                    completion_percentage: 60,
+                    ready_for_conversion: true,
+                    status: "converted",
+                    zip_code: "33301",
+                    urgency_level: "urgent"
+                }
+            ];
+
+            let html = '<h2>Potential Bid Cards</h2>';
+            
+            bidCards.forEach(card => {
+                html += `
+                    <div class="bid-card">
+                        <h3>${card.title || 'Untitled Project'}</h3>
+                        <p>Status: ${card.status} | Location: ${card.zip_code || 'Not specified'}</p>
+                        <p>Urgency: ${card.urgency_level || 'standard'}</p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${card.completion_percentage}%"></div>
+                        </div>
+                        <p>${card.completion_percentage}% Complete</p>
+                        <button onclick="handleButtonClick('${card.id}', ${card.ready_for_conversion})">
+                            ${card.ready_for_conversion ? '✓ Review & Get Bids' : 'Complete Project Details →'}
+                        </button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Simulate the handleButtonClick function from PotentialBidCard.tsx
+        function handleButtonClick(bidCardId, isReady) {
+            const statusEl = document.getElementById('status');
+            
+            console.log('Button clicked for bid card:', bidCardId, 'Ready:', isReady);
+            
+            if (isReady) {
+                // If ready, convert to official bid card
+                statusEl.className = 'status success';
+                statusEl.textContent = `✓ Button clicked! Would call onReview() for bid card ${bidCardId}`;
+                console.log('Calling onReview for bid card:', bidCardId);
+            } else {
+                // If not ready, open edit modal
+                statusEl.className = 'status success';
+                statusEl.textContent = `✓ Button clicked! Would open edit modal for bid card ${bidCardId}`;
+                console.log('Opening edit modal for bid card:', bidCardId);
+                
+                // Simulate modal opening
+                alert(`Modal would open here for bid card: ${bidCardId}\n\nIn the real app, this would show the BidCardEditModal component with the CIA chat interface.`);
+            }
+        }
+
+        // Test function to verify button behavior
+        function testButtonClick(bidCardId, isReady) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status';
+            statusEl.textContent = `Testing button click for ${bidCardId} (ready: ${isReady})...`;
+            
+            // Simulate the button click
+            handleButtonClick(bidCardId, isReady);
+        }
+
+        // Direct modal test
+        function directModalTest() {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status success';
+            statusEl.textContent = '✓ Direct modal test - Modal would open here';
+            
+            // In the real app, this would be: setShowEditModal(true)
+            alert('BidCardEditModal would be displayed here with:\n\n' +
+                  '• CIA Chat Interface (UltimateCIAChat component)\n' +
+                  '• Project completion status sidebar\n' +
+                  '• Current project details\n' +
+                  '• Tips for getting better bids\n' +
+                  '• Action buttons (Get Contractor Bids / Continue Editing Later)');
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            loadBidCards();
+            
+            // Log that the page is ready
+            console.log('Test page loaded - Simplified button implementation ready');
+            console.log('The handleButtonClick function uses simple if/else logic:');
+            console.log('- If ready: calls onReview()');
+            console.log('- If not ready: opens edit modal');
+        };
+    </script>
+</body>
+</html>

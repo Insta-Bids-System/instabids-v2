@@ -1,0 +1,80 @@
+{
+  "name": "instabids",
+  "version": "1.0.0",
+  "description": "AI-powered marketplace connecting homeowners with contractors",
+  "private": true,
+  "workspaces": [
+    "web",
+    "mobile",
+    "shared"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=web",
+    "dev:mobile": "npm run start --workspace=mobile",
+    "dev:ai": "cd ai-agents && python -m uvicorn main:app --reload",
+    "build:web": "npm run build --workspace=web",
+    "build:mobile": "npm run build --workspace=mobile",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "check-all": "node check-all.js",
+    "check-all:fix": "node check-all.js --fix",
+    "check-all:web": "node check-all.js --web",
+    "check-all:python": "node check-all.js --python",
+    "quality:monitor": "node quality-monitor.js",
+    "quality:watch": "node quality-monitor.js --watch",
+    "quality:report": "node quality-monitor.js --report",
+    "prepare": "husky install",
+    "setup": "npm install && npm run setup:supabase",
+    "setup:supabase": "supabase init && supabase start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/[your-username]/instabids.git"
+  },
+  "keywords": [
+    "marketplace",
+    "ai",
+    "contractors",
+    "homeowners",
+    "langraph",
+    "supabase",
+    "react",
+    "react-native"
+  ],
+  "author": "Instabids Team",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/[your-username]/instabids/issues"
+  },
+  "homepage": "https://github.com/[your-username]/instabids#readme",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "eslint": "^8.56.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "web/**/*.{js,jsx,ts,tsx}": [
+      "cd web && npx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+      "cd web && npm run test:run -- --run --passWithNoTests"
+    ],
+    "ai-agents/**/*.py": [
+      "cd ai-agents && ruff check --fix --select I,W291,W292,W293,F401 --exit-zero"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.53.0",
+    "dotenv": "^17.2.1",
+    "sqlite3": "^5.1.7"
+  }
+}

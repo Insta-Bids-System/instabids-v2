@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COIA Bid Card Search Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .test-btn { background: #007bff; color: white; }
+        .test-btn:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 5px; background: #e9ecef; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .bid-card { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; background: white; }
+        .bid-card h4 { margin: 0 0 10px 0; color: #333; }
+        .bid-card-meta { font-size: 0.9em; color: #666; margin: 5px 0; }
+        .bid-card-actions { margin-top: 10px; }
+        .bid-card-actions button { background: #28a745; color: white; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 COIA Bid Card Search Integration Test</h1>
+        <p>Test the unified COIA agent's bid card search functionality</p>
+
+        <!-- System Status -->
+        <div class="test-section">
+            <h3>🔧 System Status</h3>
+            <button class="test-btn" onclick="testSystemStatus()">Check COIA System Status</button>
+            <div id="status-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Bid Card Search Test -->
+        <div class="test-section">
+            <h3>🔍 Bid Card Search Test</h3>
+            <p>Test different search queries to see bid card results in chat format</p>
+            
+            <h4>Test Queries:</h4>
+            <button class="test-btn" onclick="testBidCardSearch('Show me kitchen remodeling projects near me')">Kitchen Projects</button>
+            <button class="test-btn" onclick="testBidCardSearch('I need urgent plumbing work')">Urgent Plumbing</button>
+            <button class="test-btn" onclick="testBidCardSearch('lawn care projects under 500')">Lawn Care Budget</button>
+            <button class="test-btn" onclick="testBidCardSearch('group bidding projects')">Group Bidding</button>
+            
+            <div id="search-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Profile-Based Search -->
+        <div class="test-section">
+            <h3>👤 Profile-Based Search Test</h3>
+            <p>Test search with contractor profile context</p>
+            <button class="test-btn" onclick="testProfileBasedSearch()">Search with Profile</button>
+            <div id="profile-result" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Direct API Test -->
+        <div class="test-section">
+            <h3>⚙️ Direct API Test</h3>
+            <p>Test the underlying bid card search API directly</p>
+            <button class="test-btn" onclick="testDirectAPI()">Test Direct API</button>
+            <div id="api-result" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8008';
+
+        async function testSystemStatus() {
+            const resultDiv = document.getElementById('status-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Checking system status...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/coia/status`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ System Status: ${data.status}<br>
+                        🔧 System Initialized: ${data.system_initialized}<br>
+                        📋 Capabilities: ${JSON.stringify(data.capabilities, null, 2)}<br>
+                        🎯 Interfaces: ${data.interfaces.join(', ')}
+                    `;
+                } else {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testBidCardSearch(query) {
+            const resultDiv = document.getElementById('search-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `⏳ Testing query: "${query}"...`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/coia/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: query,
+                        session_id: `test_${Date.now()}`,
+                        contractor_lead_id: null,
+                        project_id: null,
+                        context: { test_mode: true }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    let html = `✅ Query: "${query}"<br><br>`;
+                    html += `🤖 AI Response: ${data.response}<br><br>`;
+                    html += `📊 Current Mode: ${data.current_mode}<br>`;
+                    
+                    if (data.bidCards && data.bidCards.length > 0) {
+                        html += `<br>🎯 Found ${data.bidCards.length} matching bid cards:<br><br>`;
+                        data.bidCards.forEach((card, index) => {
+                            html += `
+                                <div class="bid-card">
+                                    <h4>${index + 1}. ${card.title || 'Untitled Project'}</h4>
+                                    <div class="bid-card-meta">📍 ${card.location_city}, ${card.location_state}</div>
+                                    <div class="bid-card-meta">💰 $${card.budget_min?.toLocaleString()} - $${card.budget_max?.toLocaleString()}</div>
+                                    <div class="bid-card-meta">🎯 Status: ${card.status} (${card.bids_received_count}/${card.contractor_count_needed} bids)</div>
+                                    <div class="bid-card-meta">⚡ Urgency: ${card.urgency_level}</div>
+                                    ${card.group_buying_eligible ? '<div class="bid-card-meta">👥 Group Bidding Available</div>' : ''}
+                                    <div class="bid-card-actions">
+                                        <button onclick="alert('Would navigate to bid submission for ${card.bid_card_number}')">Submit Proposal</button>
+                                        <button onclick="alert('Would open messaging for ${card.bid_card_number}')">Message Homeowner</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '<br>📭 No bid cards found matching this query';
+                    }
+                    
+                    if (data.aiRecommendation) {
+                        html += `<br><br>💡 AI Recommendation: ${data.aiRecommendation}`;
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.error_details || 'API request failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testProfileBasedSearch() {
+            const resultDiv = document.getElementById('profile-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Testing profile-based search...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/coia/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: 'Show me projects in my area that match my skills',
+                        session_id: `profile_test_${Date.now()}`,
+                        contractor_lead_id: 'test-contractor-123',
+                        project_id: null,
+                        context: {
+                            contractor_profile: {
+                                specialties: ['kitchen_remodel', 'bathroom_remodel'],
+                                service_areas: ['Dallas', 'Fort Worth'],
+                                preferred_budget_range: [5000, 50000]
+                            },
+                            test_mode: true
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    let html = '✅ Profile-based search completed<br><br>';
+                    html += `🤖 AI Response: ${data.response}<br><br>`;
+                    
+                    if (data.bidCards && data.bidCards.length > 0) {
+                        html += `🎯 Found ${data.bidCards.length} projects matching your profile:<br><br>`;
+                        data.bidCards.forEach((card, index) => {
+                            html += `
+                                <div class="bid-card">
+                                    <h4>${index + 1}. ${card.title || 'Untitled Project'}</h4>
+                                    <div class="bid-card-meta">📍 ${card.location_city}, ${card.location_state}</div>
+                                    <div class="bid-card-meta">💰 Budget: $${card.budget_min?.toLocaleString()} - $${card.budget_max?.toLocaleString()}</div>
+                                    <div class="bid-card-meta">🔧 Type: ${card.project_type}</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '📭 No projects found matching your profile';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.error_details || 'Profile-based search failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        async function testDirectAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '⏳ Testing direct API...';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/bid-cards/search?project_types=kitchen_remodel&city=Dallas&page_size=5`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    let html = '✅ Direct API call successful<br><br>';
+                    html += `📊 Total Results: ${data.total}<br>`;
+                    html += `📄 Page: ${data.page} of ${data.total_pages}<br><br>`;
+                    
+                    if (data.bid_cards && data.bid_cards.length > 0) {
+                        html += `🎯 Found ${data.bid_cards.length} bid cards:<br><br>`;
+                        data.bid_cards.forEach((card, index) => {
+                            html += `
+                                <div class="bid-card">
+                                    <h4>${index + 1}. ${card.bid_card_number}</h4>
+                                    <div class="bid-card-meta">📍 ${card.location?.city}, ${card.location?.state}</div>
+                                    <div class="bid-card-meta">💰 Budget: $${card.budget?.min?.toLocaleString()} - $${card.budget?.max?.toLocaleString()}</div>
+                                    <div class="bid-card-meta">📅 Created: ${new Date(card.created_at).toLocaleDateString()}</div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        html += '📭 No bid cards found';
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        // Auto-run system status check on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            testSystemStatus();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>InstaBids Realtime Agent — Proofs & Soak</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; margin: 1rem; }
+    h1 { font-size: 1.25rem; margin: 0 0 .75rem 0; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; }
+    button { padding: .5rem .75rem; cursor: pointer; }
+    input[type="number"] { width: 6rem; padding: .35rem .5rem; }
+    .ok { color: #0a0; font-weight: 600; }
+    .bad { color: #c00; font-weight: 600; }
+    pre, code, textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    #log { height: 240px; width: 100%; padding: .5rem; white-space: pre-wrap; overflow: auto; }
+    .kv { font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>InstaBids Realtime Agent — TURN Relay Proof + 10‑min Soak</h1>
+
+  <div class="row">
+    <button id="btn-ice">Fetch ICE servers</button>
+    <span id="ice-summary" class="kv"></span>
+  </div>
+
+  <div class="row">
+    <button id="btn-relay">Run TURN “relay” proof</button>
+    <button id="btn-soak">Start soak</button>
+    <label>
+      Minutes:
+      <input id="soak-minutes" type="number" value="10" min="1" max="60" />
+    </label>
+    <button id="btn-stop" disabled>Stop soak</button>
+  </div>
+
+  <div class="row">
+    <button id="btn-health">GET /healthz</button>
+    <button id="btn-attest">GET /attest</button>
+    <button id="btn-events">Probe /events (SSE)</button>
+  </div>
+
+  <div class="row">
+    <button id="btn-copy">Copy evidence JSON</button>
+  </div>
+
+  <div class="row">
+    <span>Relay Proof: <span id="relay-result">—</span></span>
+  </div>
+
+  <div class="row">
+    <textarea id="log" readonly placeholder="Logs..."></textarea>
+  </div>
+
+  <script>
+    const apiBase = location.origin.replace(/:\d+$/, ':30081'); // default to sidecar if opened from file:// or other port
+    const logEl = document.getElementById('log');
+    const btnIce = document.getElementById('btn-ice');
+    const btnRelay = document.getElementById('btn-relay');
+    const btnSoak = document.getElementById('btn-soak');
+    const btnStop = document.getElementById('btn-stop');
+    const btnHealth = document.getElementById('btn-health');
+    const btnAttest = document.getElementById('btn-attest');
+    const btnEvents = document.getElementById('btn-events');
+    const iceSummaryEl = document.getElementById('ice-summary');
+    const relayResultEl = document.getElementById('relay-result');
+    const soakMinutesEl = document.getElementById('soak-minutes');
+    const btnCopy = document.getElementById('btn-copy');
+    let lastEvidence = null;
+
+    function log(...args) {
+      const line = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+      logEl.value += (line + '\n');
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(...args);
+    }
+
+    async function fetchJSON(path, init) {
+      const url = path.startsWith('http') ? path : `${apiBase}${path}`;
+      const res = await fetch(url, { ...init, credentials: 'omit' });
+      if (!res.ok) throw new Error(`HTTP ${res.status} on ${path}`);
+      return res.json();
+    }
+
+    async function getICEServers() {
+      const data = await fetchJSON('/api/turn/ice');
+      const summary = [];
+      for (const s of (data.iceServers || [])) {
+        if (Array.isArray(s.urls)) {
+          summary.push(...s.urls);
+        } else if (typeof s.urls === 'string') {
+          summary.push(s.urls);
+        }
+      }
+      iceSummaryEl.textContent = `${summary.length} URL(s): ${summary.join(', ')}`;
+      log('ICE servers:', data);
+      return data;
+    }
+
+    // Expose globally as requested
+    window.getICEServers = getICEServers;
+
+    async function reportRelayProof() {
+      log('Running TURN relay proof...');
+      const { iceServers } = await getICEServers();
+      // Force relay to prove TURN specifically
+      const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: 'relay' });
+
+      const dc = pc.createDataChannel('ping');
+      let opened = false;
+      dc.onopen = () => { opened = true; log('DataChannel open'); };
+      dc.onclose = () => log('DataChannel close');
+      pc.oniceconnectionstatechange = () => log('iceConnectionState:', pc.iceConnectionState);
+      const candidates = [];
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          candidates.push(e.candidate);
+          log('candidate:', e.candidate.candidate);
+        }
+      };
+
+      // No remote peer — we only gather local candidates and inspect stats
+      const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
+      await pc.setLocalDescription(offer);
+
+      // Give ICE gathering some time
+      await new Promise(r => setTimeout(r, 5000));
+
+      const stats = await pc.getStats();
+      let relayFound = false;
+      let relayCandidates = [];
+      const byId = new Map();
+      stats.forEach(s => byId.set(s.id, s));
+
+      // Prefer selected/nominated candidate-pair, then fall back to direct local-candidate scan
+      stats.forEach(s => {
+        if (s.type === 'candidate-pair' && ((s.nominated ?? false) || (s.selected ?? false) || s.state === 'succeeded')) {
+          const lc = byId.get(s.localCandidateId);
+          const rc = byId.get(s.remoteCandidateId);
+          const lcRelay = lc && lc.candidateType === 'relay';
+          const rcRelay = rc && rc.candidateType === 'relay';
+          if (lcRelay || rcRelay) {
+            relayFound = true;
+            relayCandidates.push({
+              pairId: s.id,
+              state: s.state,
+              nominated: s.nominated ?? s.selected ?? false,
+              local: lc ? { id: lc.id, type: lc.candidateType, address: lc.address || lc.ip || null, port: lc.port || null, protocol: lc.protocol || null, relayProtocol: lc.relayProtocol || null } : null,
+              remote: rc ? { id: rc.id, type: rc.candidateType, address: rc.address || rc.ip || null, port: rc.port || null, protocol: rc.protocol || null } : null
+            });
+          }
+        }
+      });
+
+      if (!relayFound) {
+        stats.forEach(r => {
+          if (r.type === 'local-candidate' && r.candidateType === 'relay') {
+            relayFound = true;
+            relayCandidates.push({
+              id: r.id,
+              address: r.address || r.ip || null,
+              port: r.port || null,
+              protocol: r.protocol || null,
+              relayProtocol: r.relayProtocol || null
+            });
+          }
+        });
+      }
+
+      // As a fallback, parse gathered SDP candidates for 'typ relay'
+      if (!relayFound) {
+        for (const c of candidates) {
+          if (typeof c.candidate === 'string' && c.candidate.includes(' typ relay')) {
+            relayFound = true;
+            relayCandidates.push({ raw: c.candidate });
+          }
+        }
+      }
+
+      const result = {
+        ok: relayFound,
+        timestamp: new Date().toISOString(),
+        relayCandidates
+      };
+
+      if (relayFound) {
+        relayResultEl.textContent = 'PASS';
+        relayResultEl.className = 'ok';
+        log('TURN relay proof PASS:', result);
+      } else {
+        relayResultEl.textContent = 'FAIL';
+        relayResultEl.className = 'bad';
+        log('TURN relay proof FAIL:', result);
+      }
+
+      try { pc.close(); } catch {}
+      return result;
+    }
+    window.reportRelayProof = reportRelayProof;
+
+    // 2-peer loopback relay proof (forces TURN relay)
+    async function reportRelayProof2Peer() {
+      log('Running TURN relay proof (2-peer)...');
+      const { iceServers } = await getICEServers();
+      const pc1 = new RTCPeerConnection({ iceServers, iceTransportPolicy: 'relay' });
+      const pc2 = new RTCPeerConnection({ iceServers, iceTransportPolicy: 'relay' });
+
+      pc1.oniceconnectionstatechange = () => log('pc1 iceConnectionState:', pc1.iceConnectionState);
+      pc2.oniceconnectionstatechange = () => log('pc2 iceConnectionState:', pc2.iceConnectionState);
+
+      // Signal end-of-candidates and log gathering state
+      pc1.onicegatheringstatechange = () => {
+        log('pc1 iceGatheringState:', pc1.iceGatheringState);
+        if (pc1.iceGatheringState === 'complete') {
+          log('pc1 end-of-candidates → signaling null to pc2');
+          pc2.addIceCandidate(null).catch(() => {});
+        }
+      };
+      pc2.onicegatheringstatechange = () => {
+        log('pc2 iceGatheringState:', pc2.iceGatheringState);
+        if (pc2.iceGatheringState === 'complete') {
+          log('pc2 end-of-candidates → signaling null to pc1');
+          pc1.addIceCandidate(null).catch(() => {});
+        }
+      };
+      // Accept DataChannel on pc2
+      pc2.ondatachannel = (e) => {
+        e.channel.onopen = () => log('pc2 DataChannel open');
+        e.channel.onclose = () => log('pc2 DataChannel close');
+      };
+      // Candidate error diagnostics
+      pc1.onicecandidateerror = (e) => {
+        try {
+          log('pc1 ICE candidate error:', {
+            address: e.address || null, port: e.port || null, url: e.url || null,
+            errorCode: e.errorCode || null, errorText: e.errorText || null
+          });
+        } catch (err) { log('pc1 onicecandidateerror log failure', err && err.message ? err.message : err); }
+      };
+      pc2.onicecandidateerror = (e) => {
+        try {
+          log('pc2 ICE candidate error:', {
+            address: e.address || null, port: e.port || null, url: e.url || null,
+            errorCode: e.errorCode || null, errorText: e.errorText || null
+          });
+        } catch (err) { log('pc2 onicecandidateerror log failure', err && err.message ? err.message : err); }
+      };
+
+      // Exchange ICE candidates between the two local peers
+      pc1.onicecandidate = (e) => { if (e.candidate) pc2.addIceCandidate(e.candidate).catch(() => {}); };
+      pc2.onicecandidate = (e) => { if (e.candidate) pc1.addIceCandidate(e.candidate).catch(() => {}); };
+
+      // DataChannel to force DTLS transport setup
+      const dc = pc1.createDataChannel('proof');
+      dc.onopen = () => log('DataChannel open');
+      dc.onclose = () => log('DataChannel close');
+
+      // Standard offer/answer
+      const offer = await pc1.createOffer();
+      await pc1.setLocalDescription(offer);
+      await pc2.setRemoteDescription(offer);
+      const answer = await pc2.createAnswer();
+      await pc2.setLocalDescription(answer);
+      await pc1.setRemoteDescription(answer);
+
+      // Wait until ICE connects (or fails) with a timeout
+      const waitState = (pc) => new Promise((resolve) => {
+        const finish = () => resolve(pc.iceConnectionState);
+        const handler = () => {
+          if (['connected', 'completed', 'failed', 'disconnected', 'closed'].includes(pc.iceConnectionState)) {
+            pc.removeEventListener('iceconnectionstatechange', handler);
+            finish();
+          }
+        };
+        pc.addEventListener('iceconnectionstatechange', handler);
+        setTimeout(() => {
+          pc.removeEventListener('iceconnectionstatechange', handler);
+          finish();
+        }, 20000);
+      });
+      await waitState(pc1);
+
+      // Extract relay evidence from stats
+      function extractRelay(stats) {
+        const byId = new Map();
+        stats.forEach(s => byId.set(s.id, s));
+        const pairs = [];
+        stats.forEach(s => {
+          if (s.type === 'candidate-pair' && ((s.nominated ?? s.selected ?? false) || s.state === 'succeeded')) {
+            const lc = byId.get(s.localCandidateId);
+            const rc = byId.get(s.remoteCandidateId);
+            pairs.push({
+              id: s.id,
+              state: s.state,
+              local: lc ? { id: lc.id, type: lc.candidateType, address: lc.address || lc.ip || null, port: lc.port || null, protocol: lc.protocol || null, relayProtocol: lc.relayProtocol || null } : null,
+              remote: rc ? { id: rc.id, type: rc.candidateType, address: rc.address || rc.ip || null, port: rc.port || null, protocol: rc.protocol || null } : null
+            });
+          }
+        });
+        const anyRelay = pairs.some(p => (p.local && p.local.type === 'relay') || (p.remote && p.remote.type === 'relay'));
+        return { anyRelay, pairs };
+      }
+
+      const stats1 = await pc1.getStats();
+      const stats2 = await pc2.getStats();
+      const ex1 = extractRelay(stats1);
+      const ex2 = extractRelay(stats2);
+      const ok = ex1.anyRelay || ex2.anyRelay;
+
+      const result = {
+        ok,
+        timestamp: new Date().toISOString(),
+        iceStates: { pc1: pc1.iceConnectionState, pc2: pc2.iceConnectionState },
+        selectedPairs: { pc1: ex1.pairs, pc2: ex2.pairs }
+      };
+
+      lastEvidence = result;
+
+      if (ok) {
+        relayResultEl.textContent = 'PASS';
+        relayResultEl.className = 'ok';
+        log('TURN relay proof PASS:', result);
+      } else {
+        relayResultEl.textContent = 'FAIL';
+        relayResultEl.className = 'bad';
+        log('TURN relay proof FAIL:', result);
+      }
+
+      try { pc1.close(); pc2.close(); } catch {}
+      return result;
+    }
+    window.reportRelayProof2Peer = reportRelayProof2Peer;
+
+    function copyEvidence() {
+      try {
+        if (!lastEvidence) { log('No evidence to copy yet'); return; }
+        const txt = JSON.stringify(lastEvidence, null, 2);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt)
+            .then(() => log('Evidence copied to clipboard'))
+            .catch(err => log('Clipboard write failed:', err && err.message ? err.message : err));
+        } else {
+          log('Evidence:', txt);
+        }
+      } catch (e) {
+        log('Copy evidence error:', e && e.message ? e.message : e);
+      }
+    }
+
+    let soak = {
+      pc: null, dc: null, ticks: 0, errors: 0, running: false, timer: null, startedAt: null
+    };
+
+    async function startSoakTest(minutes = 10) {
+      if (soak.running) return log('Soak already running');
+      const { iceServers } = await getICEServers();
+      soak.pc = new RTCPeerConnection({ iceServers });
+      soak.dc = soak.pc.createDataChannel('soak');
+      soak.dc.onopen = () => log('Soak DC open');
+      soak.dc.onclose = () => log('Soak DC close');
+      soak.pc.oniceconnectionstatechange = () => log('soak iceConnectionState:', soak.pc.iceConnectionState);
+
+      const offer = await soak.pc.createOffer();
+      await soak.pc.setLocalDescription(offer);
+
+      soak.running = true;
+      soak.ticks = 0;
+      soak.errors = 0;
+      soak.startedAt = Date.now();
+      btnStop.disabled = false;
+
+      const endAt = soak.startedAt + minutes * 60_000;
+      const tick = () => {
+        if (!soak.running) return;
+        try {
+          if (soak.dc && soak.dc.readyState === 'open') {
+            soak.dc.send(JSON.stringify({ t: Date.now(), n: soak.ticks }));
+          }
+        } catch (e) {
+          soak.errors++;
+          log('Soak send error:', e);
+        }
+        soak.ticks++;
+        if (Date.now() >= endAt) {
+          stopSoakTest();
+          log('Soak finished:', getSoakResult());
+        } else {
+          soak.timer = setTimeout(tick, 1000);
+        }
+      };
+      soak.timer = setTimeout(tick, 1000);
+      log(`Soak started for ${minutes} minute(s)`);
+    }
+    window.startSoakTest = startSoakTest;
+
+    function stopSoakTest() {
+      if (!soak.running) return;
+      soak.running = false;
+      if (soak.timer) { clearTimeout(soak.timer); soak.timer = null; }
+      try { soak.dc && soak.dc.close(); } catch {}
+      try { soak.pc && soak.pc.close(); } catch {}
+      btnStop.disabled = true;
+      log('Soak stopped:', getSoakResult());
+    }
+    window.stopSoakTest = stopSoakTest;
+
+    function getSoakResult() {
+      const end = Date.now();
+      const durationMs = soak.startedAt ? (end - soak.startedAt) : 0;
+      return {
+        startedAt: soak.startedAt ? new Date(soak.startedAt).toISOString() : null,
+        endedAt: new Date(end).toISOString(),
+        durationMs,
+        ticks: soak.ticks,
+        errors: soak.errors,
+      };
+    }
+    window.getSoakResult = getSoakResult;
+
+    // UI bindings
+    btnIce.onclick = () => getICEServers().catch(e => log('ICE err:', e.message || e));
+    btnRelay.onclick = () => reportRelayProof2Peer().catch(e => log('Relay err:', e.message || e));
+    btnSoak.onclick = () => {
+      const mins = parseInt(soakMinutesEl.value || '10', 10);
+      startSoakTest(Math.max(1, Math.min(60, mins))).catch(e => log('Soak err:', e.message || e));
+    };
+    btnStop.onclick = () => stopSoakTest();
+    btnCopy.onclick = () => copyEvidence();
+
+    btnHealth.onclick = async () => {
+      try { log('/healthz:', await fetchJSON('/healthz')); }
+      catch (e) { log('healthz err:', e.message || e); }
+    };
+    btnAttest.onclick = async () => {
+      try { log('/attest:', await fetchJSON('/attest')); }
+      catch (e) { log('attest err:', e.message || e); }
+    };
+    btnEvents.onclick = async () => {
+      try {
+        const url = `${apiBase}/events`;
+        log('Opening SSE:', url);
+        const ctrl = new AbortController();
+        setTimeout(() => ctrl.abort(), 3000);
+        const res = await fetch(url, { signal: ctrl.signal });
+        log('SSE status:', res.status, Array.from(res.headers.entries()));
+      } catch (e) {
+        log('SSE probe done:', (e && e.name === 'AbortError') ? 'timeout ok' : (e.message || e));
+      }
+    };
+
+    // Convenience: auto-fetch ICE summary on load
+    getICEServers().catch(() => {});
+    const params = new URLSearchParams(location.search);
+    if (params.get('autorun') === 'relay') {
+      reportRelayProof2Peer().then(r => { lastEvidence = r; }).catch(e => log('autorun err:', e.message || e));
+    }
+  </script>
+</body>
+</html>

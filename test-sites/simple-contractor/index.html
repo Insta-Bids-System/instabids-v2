@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Contractor - Project Interest</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .bid-card-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #1d4ed8;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Simple Contractor Services</h1>
+        <p>Express your interest in this project</p>
+    </div>
+    
+    <div class="bid-card-container">
+        <h2>Project Details</h2>
+        <div id="bidCardDisplay" class="loading">Loading project information...</div>
+    </div>
+    
+    <div class="form-container">
+        <h2>Express Interest</h2>
+        <form id="interestForm">
+            <div class="form-group">
+                <label for="companyName">Company Name *</label>
+                <input type="text" id="companyName" name="company_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="contactName">Contact Name *</label>
+                <input type="text" id="contactName" name="contact_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone *</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" placeholder="Tell us about your interest in this project..."></textarea>
+            </div>
+            
+            <button type="submit">Submit Interest</button>
+        </form>
+        
+        <div id="submitResult"></div>
+    </div>
+
+    <script>
+        // Get bid card ID from URL parameter or use default
+        const urlParams = new URLSearchParams(window.location.search);
+        const BID_CARD_ID = urlParams.get('bid_card') || 'd57cd6cd-f424-460e-9c15-7a08c09507f3';
+        const API_BASE = 'http://localhost:8000';
+        
+        async function loadBidCard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/bid-cards/${BID_CARD_ID}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load project details`);
+                }
+                
+                const data = await response.json();
+                displayBidCard(data);
+                
+            } catch (error) {
+                document.getElementById('bidCardDisplay').innerHTML = `
+                    <div class="error">
+                        Error loading project details: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        function displayBidCard(data) {
+            const html = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <strong>Project:</strong><br>
+                        ${data.project_type.replace('_', ' ').toUpperCase()}
+                    </div>
+                    <div>
+                        <strong>Budget:</strong><br>
+                        ${data.budget_display}
+                    </div>
+                    <div>
+                        <strong>Timeline:</strong><br>
+                        ${data.timeline}
+                    </div>
+                    <div>
+                        <strong>Location:</strong><br>
+                        ${data.location.city || 'Not specified'}${data.location.state ? ', ' + data.location.state : ''}
+                    </div>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: #f0f9ff; border-radius: 4px;">
+                    <strong>Bid Card ID:</strong> ${data.id}
+                </div>
+            `;
+            
+            document.getElementById('bidCardDisplay').innerHTML = html;
+        }
+        
+        document.getElementById('interestForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                company_name: formData.get('company_name'),
+                contact_name: formData.get('contact_name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                message: formData.get('message') + `\n\nBid Card: ${BID_CARD_ID}`
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/bid-cards/${BID_CARD_ID}/express-interest`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    document.getElementById('submitResult').innerHTML = `
+                        <div style="background: #d1fae5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px; margin-top: 15px; border-radius: 4px;">
+                            Success! Your interest has been recorded. We'll be in touch soon.
+                        </div>
+                    `;
+                    e.target.reset();
+                } else {
+                    throw new Error(result.message || 'Failed to submit interest');
+                }
+                
+            } catch (error) {
+                document.getElementById('submitResult').innerHTML = `
+                    <div class="error" style="margin-top: 15px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Load bid card when page loads
+        loadBidCard();
+    </script>
+</body>
+</html>

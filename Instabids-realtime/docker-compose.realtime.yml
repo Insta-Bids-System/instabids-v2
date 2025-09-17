@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  realtime-app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.realtime
+      args:
+        - GIT_SHA=${GIT_SHA:-local-dev}
+        - IMAGE_DIGEST=${IMAGE_DIGEST:-unknown}
+    container_name: instabids-realtime-app
+    env_file:
+      - .env
+    ports:
+      - "30081:5050"
+    restart: unless-stopped
+    networks:
+      - instabids-realtime-net
+
+  coturn:
+    image: instrumentisto/coturn
+    container_name: instabids-coturn
+    command: >
+      --no-cli
+      --no-tls
+      --no-dtls
+      --listening-port=3478
+      --min-port=49160
+      --max-port=49200
+      --realm=instabids.local
+      --user=openrelayproject:openrelayproject
+      --log-file=stdout
+      --fingerprint
+      --lt-cred-mech
+      --no-udp
+      --external-ip=host.docker.internal
+    ports:
+      - "3478:3478/tcp"
+      - "49160-49200:49160-49200/tcp"
+    restart: unless-stopped
+    networks:
+      - instabids-realtime-net
+
+  cloudflared-realtime:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CF_TUNNEL_TOKEN}
+    depends_on:
+      - realtime-app
+    restart: unless-stopped
+    networks:
+      - instabids-realtime-net
+
+networks:
+  instabids-realtime-net:
+    driver: bridge

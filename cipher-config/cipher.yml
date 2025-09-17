@@ -1,0 +1,50 @@
+# DOCKER CIPHER CONFIGURATION - PERMANENT SETUP
+# This configuration ensures persistent memory with ChromaDB
+
+mcpServers:
+  filesystem:
+    type: stdio
+    command: npx
+    args:
+      - -y
+      - '@modelcontextprotocol/server-filesystem'
+      - /data
+
+# LLM Configuration
+llm:
+  provider: openai
+  model: gpt-4o
+  apiKey: $OPENAI_API_KEY
+  maxIterations: 1000
+  maxTokens: 128000
+  temperature: 0.1
+  contextWindow: 128000
+  enableMemoryCompression: true
+  memoryCompressionRatio: 0.3
+
+# Embedding configuration for vector storage
+embedding:
+  type: openai
+  model: text-embedding-3-small
+  apiKey: $OPENAI_API_KEY
+
+# ChromaDB vector store configuration
+vectorStore:
+  type: chromadb
+  host: chromadb
+  port: 8000
+  collection: instabids_memory
+  persistent: true
+
+# Persistent storage configuration
+storage:
+  type: sqlite
+  path: /data/cipher-sessions.db
+  
+# Session configuration
+session:
+  persistent: false
+  defaultSession: instabids_fresh
+  autoRestore: false
+  maxHistory: 50
+  clearOnRestart: true

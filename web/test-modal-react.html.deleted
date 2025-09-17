@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Potential Bid Card Modal - React Integration</title>
+</head>
+<body>
+    <div id="test-root"></div>
+    
+    <script type="module">
+        // This page should be accessed through the Vite dev server
+        // at http://localhost:5173/test-modal-react.html
+        
+        // Import the test component
+        import('./src/test-potential-bid-card.tsx');
+    </script>
+
+    <div style="padding: 20px; background: #fafafa; margin-top: 40px;">
+        <h2>Testing Checklist:</h2>
+        <ol>
+            <li>✓ Button click handler simplified to 7 lines</li>
+            <li>✓ Modal receives full bid card context</li>
+            <li>⚠️ CIA chat component integration (needs testing)</li>
+            <li>⚠️ Homeowner context loading (needs verification)</li>
+            <li>⚠️ Bid card editing through conversation (needs testing)</li>
+        </ol>
+        
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li>Clicking "Complete Project Details" opens the modal</li>
+            <li>Modal shows UltimateCIAChat component</li>
+            <li>Chat starts with bid card context pre-loaded</li>
+            <li>Homeowner can edit bid card through conversation</li>
+            <li>Updates are saved back to the potential_bid_cards table</li>
+        </ul>
+    </div>
+</body>
+</html>

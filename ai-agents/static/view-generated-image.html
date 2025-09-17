@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Generated Backyard Image - InstaBids</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 1200px;
+            width: 100%;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+        .content {
+            padding: 40px;
+        }
+        .status-message {
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status-message.error {
+            background: #ef4444;
+        }
+        .status-message.loading {
+            background: #3b82f6;
+        }
+        .image-container {
+            background: #f3f4f6;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .info-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        .info-card h3 {
+            color: #374151;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .info-card p {
+            color: #6b7280;
+            font-size: 0.95em;
+            word-break: break-all;
+        }
+        .tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin: 4px;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .refresh-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏡 Backyard Transformation Viewer</h1>
+            <p>AI-Generated Vision with DALL-E 3</p>
+        </div>
+        
+        <div class="content">
+            <div id="status" class="status-message loading">
+                <div class="loading-spinner"></div>
+                <span>Loading generated image from database...</span>
+            </div>
+            
+            <div class="image-container" id="imageContainer">
+                <div class="loading-spinner"></div>
+            </div>
+            
+            <div class="info-grid" id="infoGrid" style="display: none;">
+                <div class="info-card">
+                    <h3>Vision Image ID</h3>
+                    <p id="imageId">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Board Title</h3>
+                    <p id="boardTitle">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Category</h3>
+                    <p id="category">-</p>
+                </div>
+                <div class="info-card">
+                    <h3>Tags</h3>
+                    <div id="tags"></div>
+                </div>
+            </div>
+            
+            <button class="refresh-btn" onclick="loadImage()">Refresh Image</button>
+        </div>
+    </div>
+
+    <script>
+        const IMAGE_ID = '1bbed9d1-2123-4c10-af00-3a580b7c3698';
+        const SUPABASE_URL = 'https://xrhgrthdcaymxuqcgrmj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjUzMTI4MzMsImV4cCI6MjA0MDg4ODgzM30.V6nwideUHuo0ykxZFb8qn5WAR36MQjCYNsSyJsLt_9k';
+        
+        async function loadImage() {
+            const statusEl = document.getElementById('status');
+            const imageContainer = document.getElementById('imageContainer');
+            const infoGrid = document.getElementById('infoGrid');
+            
+            statusEl.className = 'status-message loading';
+            statusEl.innerHTML = '<div class="loading-spinner"></div><span>Fetching image from database...</span>';
+            
+            try {
+                // Fetch image data from Supabase
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/inspiration_images?id=eq.${IMAGE_ID}&select=*,inspiration_boards(title)`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    const imageData = data[0];
+                    
+                    // Update status
+                    statusEl.className = 'status-message';
+                    statusEl.innerHTML = '✅ <span>Image loaded successfully from database!</span>';
+                    
+                    // Display image
+                    imageContainer.innerHTML = `<img src="${imageData.image_url}" alt="Generated Backyard with Artificial Turf" onerror="handleImageError()">`;
+                    
+                    // Update info
+                    document.getElementById('imageId').textContent = imageData.id;
+                    document.getElementById('boardTitle').textContent = imageData.inspiration_boards?.title || 'Backyard Turf Transformation';
+                    document.getElementById('category').textContent = imageData.category;
+                    
+                    // Display tags
+                    const tagsContainer = document.getElementById('tags');
+                    tagsContainer.innerHTML = '';
+                    if (imageData.tags && Array.isArray(imageData.tags)) {
+                        imageData.tags.forEach(tag => {
+                            const tagEl = document.createElement('span');
+                            tagEl.className = 'tag';
+                            tagEl.textContent = tag;
+                            tagsContainer.appendChild(tagEl);
+                        });
+                    }
+                    
+                    infoGrid.style.display = 'grid';
+                    
+                } else {
+                    throw new Error('Image not found in database');
+                }
+                
+            } catch (error) {
+                console.error('Error loading image:', error);
+                statusEl.className = 'status-message error';
+                statusEl.innerHTML = `❌ <span>Error: ${error.message}</span>`;
+                imageContainer.innerHTML = '<p style="color: #6b7280;">Failed to load image. The OpenAI URL may have expired.</p>';
+            }
+        }
+        
+        function handleImageError() {
+            const statusEl = document.getElementById('status');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            statusEl.className = 'status-message error';
+            statusEl.innerHTML = '⚠️ <span>Image URL has expired (OpenAI URLs expire after 2 hours)</span>';
+            imageContainer.innerHTML = `
+                <div style="text-align: center; color: #6b7280;">
+                    <p style="font-size: 1.2em; margin-bottom: 10px;">🖼️ Image Generated Successfully</p>
+                    <p>The image was generated and saved to the database.</p>
+                    <p>However, OpenAI image URLs expire after 2 hours.</p>
+                    <p style="margin-top: 20px;"><strong>Image ID:</strong> ${IMAGE_ID}</p>
+                    <p>To view it again, generate a new image or implement permanent storage.</p>
+                </div>
+            `;
+        }
+        
+        // Load image on page load
+        loadImage();
+    </script>
+</body>
+</html>

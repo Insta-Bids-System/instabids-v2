@@ -1,0 +1,58 @@
+# Keep build context lean but include what realtime-app needs
+# Include: requirements.txt, app.py, web/**
+# Ignore common large/unnecessary paths
+
+# VCS
+.git
+.gitignore
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+*.py[cod]
+
+# OS junk
+**/.DS_Store
+**/Thumbs.db
+
+# Node/JS
+node_modules/
+**/node_modules/
+
+# Android/iOS build artifacts (mobile project)
+instabids-mobile/android/.gradle/
+instabids-mobile/android/app/build/
+instabids-mobile/android/build/
+instabids-mobile/ios/
+instabids-mobile/node_modules/
+instabids-mobile/.expo/
+instabids-mobile/.expo-shared/
+instabids-mobile/.npm/
+instabids-mobile/.yarn/
+
+# Tools (not needed in image)
+tools/
+tools/**
+
+# Logs
+*.log
+**/*.log
+
+# Env files (do not bake secrets into image; they are injected at runtime)
+.env
+.env.*
+!.env.example
+
+# Docker artifacts
+docker-compose.yml
+docker-compose.realtime.yml
+Dockerfile
+Dockerfile.realtime
+
+# Misc
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/

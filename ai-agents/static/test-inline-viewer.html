@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inline File Viewer Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .button-group {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button.green {
+            background: #10b981;
+        }
+        button.green:hover {
+            background: #059669;
+        }
+        .viewer-container {
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 400px;
+            background: #fafafa;
+        }
+        #pdf-viewer {
+            text-align: center;
+        }
+        #pdf-canvas {
+            border: 1px solid #ddd;
+            margin: 20px auto;
+            display: block;
+            max-width: 100%;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .controls button {
+            margin: 0 5px;
+            padding: 5px 15px;
+            font-size: 14px;
+        }
+        #image-viewer img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            margin-top: 20px;
+            color: #1e40af;
+        }
+        .error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+        .success {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .file-info {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .file-info h3 {
+            margin-top: 0;
+            color: #374151;
+        }
+        .file-info ul {
+            list-style: none;
+            padding: 0;
+        }
+        .file-info li {
+            padding: 5px 0;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Inline File Viewer Test</h1>
+        <p>Testing inline viewing functionality for PDF and image files from Supabase storage</p>
+        
+        <div class="file-info">
+            <h3>📁 Available Test Files</h3>
+            <ul>
+                <li>📄 <strong>PDF:</strong> test_bid_proposal.pdf (1.8 KB) - Contractor bid proposal document</li>
+                <li>🖼️ <strong>Image:</strong> kitchen_design.jpg (240 KB) - Kitchen design mockup</li>
+            </ul>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="loadPDF()">📄 View PDF</button>
+            <button class="green" onclick="loadImage()">🖼️ View Image</button>
+            <button onclick="clearViewer()" style="background: #6b7280;">Clear</button>
+        </div>
+        
+        <div id="status-message"></div>
+        
+        <div class="viewer-container">
+            <div id="pdf-viewer" style="display: none;">
+                <h2>PDF Viewer</h2>
+                <div class="controls">
+                    <button onclick="previousPage()">← Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button onclick="nextPage()">Next →</button>
+                    <span style="margin-left: 20px;">|</span>
+                    <button onclick="zoomOut()">Zoom Out</button>
+                    <span id="zoom-info">100%</span>
+                    <button onclick="zoomIn()">Zoom In</button>
+                </div>
+                <canvas id="pdf-canvas"></canvas>
+            </div>
+            
+            <div id="image-viewer" style="display: none;">
+                <h2>Image Viewer</h2>
+                <img id="image-display" src="" alt="Attachment Image">
+            </div>
+            
+            <div id="empty-state">
+                <p style="text-align: center; color: #6b7280;">Select a file type above to test inline viewing</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PDF.js configuration
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        // Test file URLs from Supabase storage
+        const testFiles = {
+            pdf: 'https://xrhgrthdcaymxuqcgrmj.supabase.co/storage/v1/object/public/project-images/bid_attachments/303afce1-2de4-418a-bb9a-03775d89f62b/20250813_045316_test_bid_proposal.pdf',
+            image: 'https://xrhgrthdcaymxuqcgrmj.supabase.co/storage/v1/object/public/project-images/bid_attachments/303afce1-2de4-418a-bb9a-03775d89f62b/kitchen_design_mockup.jpg'
+        };
+        
+        let pdfDoc = null;
+        let currentPage = 1;
+        let scale = 1.0;
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.className = 'status';
+            if (type === 'error') statusDiv.className += ' error';
+            if (type === 'success') statusDiv.className += ' success';
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+        }
+        
+        function clearViewer() {
+            document.getElementById('pdf-viewer').style.display = 'none';
+            document.getElementById('image-viewer').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.getElementById('status-message').style.display = 'none';
+            pdfDoc = null;
+            currentPage = 1;
+            scale = 1.0;
+        }
+        
+        async function loadPDF() {
+            clearViewer();
+            document.getElementById('pdf-viewer').style.display = 'block';
+            document.getElementById('empty-state').style.display = 'none';
+            
+            showStatus('Loading PDF document...');
+            
+            try {
+                const loadingTask = pdfjsLib.getDocument(testFiles.pdf);
+                pdfDoc = await loadingTask.promise;
+                
+                showStatus(`PDF loaded successfully! Total pages: ${pdfDoc.numPages}`, 'success');
+                document.getElementById('page-info').textContent = `Page ${currentPage} of ${pdfDoc.numPages}`;
+                
+                renderPage(currentPage);
+            } catch (error) {
+                showStatus(`Error loading PDF: ${error.message}`, 'error');
+                console.error('PDF loading error:', error);
+            }
+        }
+        
+        async function renderPage(pageNum) {
+            if (!pdfDoc) return;
+            
+            try {
+                const page = await pdfDoc.getPage(pageNum);
+                const canvas = document.getElementById('pdf-canvas');
+                const context = canvas.getContext('2d');
+                
+                const viewport = page.getViewport({ scale: scale });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                document.getElementById('page-info').textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+                document.getElementById('zoom-info').textContent = `${Math.round(scale * 100)}%`;
+            } catch (error) {
+                showStatus(`Error rendering page: ${error.message}`, 'error');
+            }
+        }
+        
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderPage(currentPage);
+            }
+        }
+        
+        function nextPage() {
+            if (pdfDoc && currentPage < pdfDoc.numPages) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        }
+        
+        function zoomIn() {
+            if (scale < 2.0) {
+                scale += 0.25;
+                renderPage(currentPage);
+            }
+        }
+        
+        function zoomOut() {
+            if (scale > 0.5) {
+                scale -= 0.25;
+                renderPage(currentPage);
+            }
+        }
+        
+        function loadImage() {
+            clearViewer();
+            document.getElementById('image-viewer').style.display = 'block';
+            document.getElementById('empty-state').style.display = 'none';
+            
+            showStatus('Loading image...');
+            
+            const img = document.getElementById('image-display');
+            img.onload = function() {
+                showStatus(`Image loaded successfully! Dimensions: ${img.naturalWidth}x${img.naturalHeight}px`, 'success');
+            };
+            img.onerror = function() {
+                showStatus('Error loading image. The file may not exist or is inaccessible.', 'error');
+            };
+            img.src = testFiles.image;
+        }
+        
+        // Test API endpoint access
+        async function testAPIEndpoint() {
+            try {
+                const response = await fetch('http://localhost:8008/api/proposal-review/303afce1-2de4-418a-bb9a-03775d89f62b/attachments/c86f61c2-9e4e-4beb-b5cc-b4a20ad0f41e/view');
+                const data = await response.json();
+                console.log('API endpoint test:', data);
+            } catch (error) {
+                console.error('API endpoint error:', error);
+            }
+        }
+        
+        // Run API test on load
+        window.addEventListener('load', () => {
+            testAPIEndpoint();
+        });
+    </script>
+</body>
+</html>

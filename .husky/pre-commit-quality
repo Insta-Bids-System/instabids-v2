@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🤖 Agent 6 Quality Gate: Checking code before commit..."
+
+# Run our unified quality check
+npm run check-all:fix
+
+# Check if there are still critical issues
+if ! npm run check-all > /dev/null 2>&1; then
+    echo "❌ Quality check failed. Please review the issues above."
+    echo "💡 Run 'npm run check-all:fix' to auto-fix simple issues"
+    echo "💡 Run 'npm run check-all' to see detailed issues"
+    exit 1
+fi
+
+echo "✅ Quality check passed - proceeding with commit"

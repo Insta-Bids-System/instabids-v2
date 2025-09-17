@@ -1,0 +1,88 @@
+# Core Dependencies
+langgraph>=0.0.20
+langchain>=0.1.0
+langchain-anthropic>=0.1.1
+langchain-openai>=0.0.5
+langchain-groq>=0.0.1
+langsmith>=0.0.77
+deepagents>=0.0.3  # BSA - Bid Submission Agent framework
+
+# AI/ML
+openai>=1.6.1
+anthropic>=0.8.1
+groq>=0.4.1
+numpy>=1.24.3
+pandas>=2.0.3
+
+# Web Framework
+fastapi>=0.108.0
+uvicorn[standard]>=0.25.0
+pydantic>=2.5.0
+python-multipart>=0.0.6
+
+# Supabase
+supabase>=2.3.0
+postgrest>=0.13.0
+psycopg2-binary>=2.9.0
+
+# HTTP & Async
+httpx>=0.25.2
+aiohttp>=3.9.1
+websockets>=12.0
+
+# Utilities
+python-dotenv>=1.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+email-validator>=2.1.0
+
+# Image Processing
+pillow>=10.1.0
+python-magic>=0.4.27
+
+# Monitoring & Logging
+structlog>=23.2.0
+sentry-sdk>=1.39.1
+
+# Testing
+pytest>=7.4.3
+pytest-asyncio>=0.21.1
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+
+# Development
+black>=23.12.0
+flake8>=6.1.0
+mypy>=1.7.1
+pre-commit>=3.5.0
+
+# Rate Limiting
+slowapi>=0.1.9
+
+# Caching
+redis>=5.0.1
+aiocache>=0.12.2
+
+# Job Queue (for background tasks)
+celery>=5.3.4
+redis>=5.0.1
+
+# Date/Time
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Geocoding & Distance Calculation
+uszipcode==0.2.6  # Fixed version for SQLAlchemy compatibility
+haversine>=2.8.0
+
+# Data Validation
+jsonschema>=4.20.0
+
+# Web Scraping (for EAA agent)
+beautifulsoup4>=4.12.2
+scrapy>=2.11.0
+selenium>=4.16.0
+
+# Document Processing
+pypdf>=3.17.2
+python-docx>=1.1.0

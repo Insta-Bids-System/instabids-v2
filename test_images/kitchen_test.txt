@@ -1,0 +1,1 @@
+Test kitchen image content for dual-table saving verification. This file simulates a kitchen photo that should be saved to both inspiration_images and property_photos when the My Property checkbox is checked.

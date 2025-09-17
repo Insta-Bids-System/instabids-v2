@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Testing Tool - Green Lawn Pro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f3f4f6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .test-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .log-area {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .test-data {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        pre {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 Form Testing Tool</h1>
+        <p>Test form submission for AI agents</p>
+    </div>
+    
+    <div class="test-panel">
+        <h2>Automated Form Testing</h2>
+        <p>Use this tool to test if forms can be submitted programmatically (like AI agents would).</p>
+        
+        <button class="btn btn-primary" onclick="testFormSubmission()">
+            🚀 Run Test Submission
+        </button>
+        
+        <button class="btn btn-success" onclick="checkSubmissions()">
+            📊 Check Submissions
+        </button>
+        
+        <button class="btn btn-danger" onclick="clearLog()">
+            🗑️ Clear Log
+        </button>
+        
+        <div id="status"></div>
+    </div>
+    
+    <div class="test-panel">
+        <h2>Test Data Being Submitted</h2>
+        <div class="test-data">
+            <pre id="testData"></pre>
+        </div>
+    </div>
+    
+    <div class="test-panel">
+        <h2>Test Log</h2>
+        <div class="log-area" id="logArea"></div>
+    </div>
+
+    <script>
+        // Test data that will be submitted
+        const testFormData = {
+            company_name: "AI Test Company " + Date.now(),
+            contact_name: "AI Agent Test",
+            email: "aitest@example.com",
+            phone: "(555) 123-4567",
+            website: "https://www.ai-test-company.com",
+            opportunity_type: "lead_generation",
+            message: "This is an automated test submission from AI agent testing tool. Timestamp: " + new Date().toISOString()
+        };
+        
+        // Display test data
+        document.getElementById('testData').textContent = JSON.stringify(testFormData, null, 2);
+        
+        function log(message, type = 'info') {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : '📝';
+            logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+        
+        function clearLog() {
+            document.getElementById('logArea').textContent = '';
+            document.getElementById('status').innerHTML = '';
+            log('Log cleared');
+        }
+        
+        async function testFormSubmission() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<div class="status">⏳ Starting test...</div>';
+            
+            log('Starting form submission test...');
+            
+            try {
+                // Simulate form submission by directly calling localStorage
+                // This mimics what happens when the form is submitted
+                const submission = {
+                    timestamp: new Date().toISOString(),
+                    data: testFormData,
+                    userAgent: navigator.userAgent,
+                    referrer: 'Test Tool'
+                };
+                
+                log('Creating submission object...');
+                log(JSON.stringify(submission, null, 2));
+                
+                // Get existing submissions
+                let submissions = JSON.parse(localStorage.getItem('greenLawnProSubmissions') || '[]');
+                log(`Found ${submissions.length} existing submissions`);
+                
+                // Add new submission
+                submissions.push(submission);
+                localStorage.setItem('greenLawnProSubmissions', JSON.stringify(submissions));
+                
+                log('Submission saved to localStorage', 'success');
+                log(`Total submissions now: ${submissions.length}`, 'success');
+                
+                statusDiv.innerHTML = '<div class="status status-success">✅ Test submission successful!</div>';
+                
+                // Optional: Test webhook if configured
+                /*
+                log('Testing webhook submission...');
+                const webhookResponse = await fetch('YOUR_WEBHOOK_URL_HERE', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(submission)
+                });
+                
+                if (webhookResponse.ok) {
+                    log('Webhook submission successful', 'success');
+                } else {
+                    log('Webhook submission failed: ' + webhookResponse.status, 'error');
+                }
+                */
+                
+            } catch (error) {
+                log('Error during test: ' + error.message, 'error');
+                statusDiv.innerHTML = '<div class="status status-error">❌ Test failed: ' + error.message + '</div>';
+            }
+        }
+        
+        function checkSubmissions() {
+            log('Checking submissions...');
+            
+            try {
+                const submissions = JSON.parse(localStorage.getItem('greenLawnProSubmissions') || '[]');
+                log(`Found ${submissions.length} total submissions`);
+                
+                if (submissions.length > 0) {
+                    log('Latest submission:', 'success');
+                    log(JSON.stringify(submissions[submissions.length - 1], null, 2));
+                    
+                    // Check for test submissions
+                    const testSubmissions = submissions.filter(sub => 
+                        sub.data.company_name && sub.data.company_name.includes('AI Test Company')
+                    );
+                    log(`Found ${testSubmissions.length} test submissions from this tool`, 'success');
+                } else {
+                    log('No submissions found', 'error');
+                }
+                
+            } catch (error) {
+                log('Error checking submissions: ' + error.message, 'error');
+            }
+        }
+        
+        // Initial log entry
+        log('Form testing tool loaded and ready');
+        log('Target form location: /index.html');
+        
+        // Check for existing submissions on load
+        const existingSubmissions = JSON.parse(localStorage.getItem('greenLawnProSubmissions') || '[]');
+        log(`Found ${existingSubmissions.length} existing submissions on load`);
+    </script>
+</body>
+</html>

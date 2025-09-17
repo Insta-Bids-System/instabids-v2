@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Actual Images Being Served</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .column { float: left; width: 30%; margin: 1.5%; padding: 10px; border: 2px solid #ddd; }
+        .column h2 { color: #333; }
+        img { width: 100%; height: auto; margin: 10px 0; }
+        .clear { clear: both; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Actual Images Being Served by Backend</h1>
+        <div id="status" class="status info">Loading images from backend API...</div>
+        
+        <div id="images-container"></div>
+        <div class="clear"></div>
+        
+        <h2>Raw API Response:</h2>
+        <pre id="api-response" style="background: #f5f5f5; padding: 10px; overflow: auto;"></pre>
+    </div>
+
+    <script>
+        // Fetch images from the demo API
+        fetch('http://localhost:8008/api/demo/inspiration/images?board_id=26cf972b-83e4-484c-98b6-a5d1a4affee3')
+            .then(response => response.json())
+            .then(data => {
+                // Display raw response
+                document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
+                
+                // Group images by category
+                const current = data.filter(img => img.tags.includes('current'));
+                const inspiration = data.filter(img => img.tags.includes('inspiration'));
+                const vision = data.filter(img => img.tags.includes('vision'));
+                
+                let html = '';
+                
+                // Current Space
+                html += '<div class="column">';
+                html += '<h2>Current Space (' + current.length + ')</h2>';
+                current.forEach(img => {
+                    html += '<img src="' + img.image_url + '" alt="Current">';
+                    html += '<p>Tags: ' + img.tags.join(', ') + '</p>';
+                });
+                html += '</div>';
+                
+                // Inspiration
+                html += '<div class="column">';
+                html += '<h2>Inspiration (' + inspiration.length + ')</h2>';
+                inspiration.forEach(img => {
+                    html += '<img src="' + img.image_url + '" alt="Inspiration">';
+                    html += '<p>Tags: ' + img.tags.join(', ') + '</p>';
+                });
+                html += '</div>';
+                
+                // My Vision
+                html += '<div class="column">';
+                html += '<h2>My Vision (' + vision.length + ')</h2>';
+                vision.forEach(img => {
+                    html += '<img src="' + img.image_url + '" alt="Vision">';
+                    html += '<p>Tags: ' + img.tags.join(', ') + '</p>';
+                    html += '<p><strong>URL:</strong> ' + img.image_url.substring(0, 80) + '...</p>';
+                    if (img.image_url.includes('oaidalleapi')) {
+                        html += '<p style="color: green; font-weight: bold;">✓ REAL DALL-E GENERATED IMAGE</p>';
+                    } else if (img.image_url.includes('unsplash')) {
+                        html += '<p style="color: red; font-weight: bold;">✗ Still Unsplash placeholder</p>';
+                    }
+                });
+                html += '</div>';
+                
+                document.getElementById('images-container').innerHTML = html;
+                
+                // Update status
+                if (vision.length > 0 && vision[0].image_url.includes('oaidalleapi')) {
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('status').textContent = 'SUCCESS: Real DALL-E image is being served!';
+                } else {
+                    document.getElementById('status').className = 'status error';
+                    document.getElementById('status').textContent = 'ERROR: Still showing placeholder image';
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').textContent = 'ERROR: ' + error.message;
+                console.error('Error:', error);
+            });
+    </script>
+</body>
+</html>

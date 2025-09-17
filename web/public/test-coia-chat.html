@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COIA Chat Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        .chat-container {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 600px;
+        }
+        .messages {
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .user-message {
+            background: #2563eb;
+            margin-left: 20%;
+            text-align: right;
+        }
+        .assistant-message {
+            background: #262626;
+            margin-right: 20%;
+        }
+        .bid-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .bid-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .bid-card:hover {
+            transform: translateY(-4px);
+        }
+        .bid-card-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .bid-card-details {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #262626;
+            color: #fff;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 24px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #1f2937;
+        }
+        .success { background: #10b981; }
+        .error { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>COIA Chat Test - Bid Cards Verification</h1>
+    
+    <div class="chat-container">
+        <div id="messages" class="messages"></div>
+        <div id="bidCards" class="bid-cards-container"></div>
+        <div id="status" class="status"></div>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type your message..." value="I am a General Contractor. Please show me available projects.">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let sessionId = 'test-session-' + Date.now();
+        
+        function addMessage(content, isUser = false) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'assistant-message'}`;
+            messageDiv.textContent = content;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function displayBidCards(bidCards) {
+            const container = document.getElementById('bidCards');
+            container.innerHTML = '<h3>Available Projects (' + bidCards.length + ' found)</h3>';
+            
+            bidCards.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'bid-card';
+                cardDiv.innerHTML = `
+                    <div class="bid-card-title">${card.title || 'Untitled Project'}</div>
+                    <div class="bid-card-details">
+                        <div>📍 ${card.location_city || ''}, ${card.location_state || ''} ${card.location_zip || ''}</div>
+                        <div>💰 Budget: $${(card.budget_min || 0).toLocaleString()} - $${(card.budget_max || 0).toLocaleString()}</div>
+                        <div>🔧 Type: ${card.project_type || 'General'}</div>
+                        <div>📅 ${card.urgency_level || 'Standard'} Timeline</div>
+                        <div>👥 ${card.bids_received_count || 0}/${card.contractor_count_needed || 4} bids</div>
+                        <div>🎯 ID: ${card.bid_card_number || card.id}</div>
+                    </div>
+                `;
+                cardDiv.onclick = () => {
+                    alert('Opening bid submission for: ' + (card.bid_card_number || card.id));
+                    window.open(`/contractor/submit-proposal?bid=${card.bid_card_number || card.id}`, '_blank');
+                };
+                container.appendChild(cardDiv);
+            });
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = 'Sending message to COIA...';
+            statusDiv.className = 'status';
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            try {
+                const response = await fetch('http://localhost:8008/api/coia/landing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('COIA Response:', data);
+                
+                if (data.success) {
+                    addMessage(data.response || 'Processing...', false);
+                    
+                    if (data.bidCards && data.bidCards.length > 0) {
+                        statusDiv.textContent = `✅ SUCCESS! Found ${data.bidCards.length} bid cards!`;
+                        statusDiv.className = 'status success';
+                        displayBidCards(data.bidCards);
+                    } else {
+                        statusDiv.textContent = '⚠️ Response received but no bid cards found';
+                        statusDiv.className = 'status';
+                        console.log('No bid cards in response:', data);
+                    }
+                } else {
+                    statusDiv.textContent = '❌ Error: ' + (data.error || 'Unknown error');
+                    statusDiv.className = 'status error';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        // Allow Enter key to send
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Auto-send on load for quick testing
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('Auto-sending test message...');
+                sendMessage();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

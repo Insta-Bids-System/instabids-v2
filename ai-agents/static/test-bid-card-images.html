@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bid Card Images Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .button-group {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        button.success {
+            background: #10b981;
+        }
+        button.success:hover {
+            background: #059669;
+        }
+        .status {
+            padding: 10px;
+            background: #f0f9ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            margin-top: 20px;
+            color: #1e40af;
+        }
+        .error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #991b1b;
+        }
+        .success {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+        .images-container {
+            margin-top: 30px;
+        }
+        .tab-buttons {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        .tab-content {
+            min-height: 300px;
+        }
+        .photo-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .photo-header {
+            background: #f9fafb;
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .photo-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+        .photo-description {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .photo-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .photo-body {
+            padding: 15px;
+        }
+        .photo-placeholder {
+            background: #f3f4f6;
+            border: 1px dashed #d1d5db;
+            border-radius: 4px;
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+        }
+        .contractor-request {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .badge-rfi {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Bid Card Images Test</h1>
+        <p>Testing display of RFI photos and project images associated with bid cards</p>
+        
+        <div class="button-group">
+            <button onclick="loadBidCardImages()">Load Bid Card Images</button>
+            <button class="success" onclick="loadTestBidCard()">Load Test Kitchen Bid Card</button>
+            <button onclick="clearImages()" style="background: #6b7280;">Clear</button>
+        </div>
+        
+        <div id="status-message" style="display: none;"></div>
+        
+        <div class="images-container" id="images-container" style="display: none;">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('rfi')" id="rfi-tab">
+                    📸 RFI Photos (<span id="rfi-count">0</span>)
+                </button>
+                <button class="tab-button" onclick="showTab('project')" id="project-tab">
+                    🏠 Project Images (<span id="project-count">0</span>)
+                </button>
+            </div>
+            
+            <div class="tab-content">
+                <div id="rfi-content" style="display: block;">
+                    <div class="empty-state">
+                        <div class="empty-icon">📸</div>
+                        <p>No RFI photos to display</p>
+                    </div>
+                </div>
+                
+                <div id="project-content" style="display: none;">
+                    <div class="empty-state">
+                        <div class="empty-icon">🏠</div>
+                        <p>No project images to display</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'rfi';
+        let imagesData = null;
+        
+        // Test bid card ID with RFI photos
+        const testBidCardId = '36214de5-a068-4dcc-af99-cf33238e7472';
+        
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status-message');
+            statusDiv.className = 'status';
+            if (type === 'error') statusDiv.className += ' error';
+            if (type === 'success') statusDiv.className += ' success';
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+        }
+        
+        function clearImages() {
+            document.getElementById('images-container').style.display = 'none';
+            document.getElementById('status-message').style.display = 'none';
+            imagesData = null;
+            
+            // Reset tab content
+            document.getElementById('rfi-content').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📸</div>
+                    <p>No RFI photos to display</p>
+                </div>
+            `;
+            document.getElementById('project-content').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🏠</div>
+                    <p>No project images to display</p>
+                </div>
+            `;
+        }
+        
+        function showTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Show/hide content
+            document.getElementById('rfi-content').style.display = tabName === 'rfi' ? 'block' : 'none';
+            document.getElementById('project-content').style.display = tabName === 'project' ? 'block' : 'none';
+            
+            currentTab = tabName;
+        }
+        
+        async function loadBidCardImages(bidCardId = null) {
+            const targetId = bidCardId || prompt('Enter Bid Card ID:', testBidCardId);
+            if (!targetId) return;
+            
+            showStatus('Loading bid card images...');
+            
+            try {
+                const response = await fetch(`http://localhost:8008/api/bid-cards/${targetId}/images`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to load images: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                imagesData = data;
+                
+                showStatus(
+                    `✅ Loaded ${data.total_images} images for bid card ${data.bid_card_number}`, 
+                    'success'
+                );
+                
+                displayImages(data);
+                
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                console.error('Error loading images:', error);
+            }
+        }
+        
+        function loadTestBidCard() {
+            loadBidCardImages(testBidCardId);
+        }
+        
+        function displayImages(data) {
+            // Update tab counts
+            document.getElementById('rfi-count').textContent = data.rfi_photos.length;
+            document.getElementById('project-count').textContent = data.project_images.length;
+            
+            // Display RFI photos
+            displayRFIPhotos(data.rfi_photos);
+            
+            // Display project images
+            displayProjectImages(data.project_images);
+            
+            // Show the images container
+            document.getElementById('images-container').style.display = 'block';
+        }
+        
+        function displayRFIPhotos(photos) {
+            const container = document.getElementById('rfi-content');
+            
+            if (!photos || photos.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📸</div>
+                        <p>No RFI photos available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            photos.forEach((photo, index) => {
+                html += `
+                    <div class="photo-card">
+                        <div class="photo-header">
+                            <div class="photo-title">
+                                📸 ${photo.filename}
+                                <span class="badge badge-rfi">RFI</span>
+                            </div>
+                            <div class="photo-description">${photo.description}</div>
+                            <div class="photo-meta">
+                                <span>Type: ${photo.type.replace('_', ' ').toUpperCase()}</span>
+                                <span>Source: ${photo.source}</span>
+                                <span>Uploaded: ${new Date(photo.uploaded_at).toLocaleDateString()}</span>
+                            </div>
+                            ${photo.contractor_request ? `
+                                <div class="contractor-request">
+                                    <strong>Contractor Request:</strong> ${photo.contractor_request}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="photo-body">
+                            <div class="photo-placeholder">
+                                📸 Image Preview Placeholder
+                                <br><small>File: ${photo.filename}</small>
+                                <br><small>In a real system, the actual image would display here</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function displayProjectImages(images) {
+            const container = document.getElementById('project-content');
+            
+            if (!images || images.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🏠</div>
+                        <p>No project images available</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            images.forEach((image, index) => {
+                html += `
+                    <div class="photo-card">
+                        <div class="photo-header">
+                            <div class="photo-title">
+                                🏠 ${image.filename}
+                                <span class="badge" style="background: #d1fae5; color: #065f46;">PROJECT</span>
+                            </div>
+                            ${image.description ? `<div class="photo-description">${image.description}</div>` : ''}
+                            <div class="photo-meta">
+                                <span>Type: ${image.type}</span>
+                            </div>
+                        </div>
+                        <div class="photo-body">
+                            <div class="photo-placeholder">
+                                🏠 Project Image Preview
+                                <br><small>File: ${image.filename}</small>
+                                <br><small>URL: ${image.url}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Load test data on page load
+        window.addEventListener('load', () => {
+            // Auto-load test bid card for demonstration
+            setTimeout(() => {
+                loadTestBidCard();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

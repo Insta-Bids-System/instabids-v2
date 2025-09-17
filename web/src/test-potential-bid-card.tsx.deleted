@@ -1,0 +1,246 @@
+import React, { useState, useEffect } from "react";
+import ReactDOM from "react-dom/client";
+
+// Test component to verify modal functionality
+const TestPotentialBidCard = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [testResults, setTestResults] = useState<string[]>([]);
+  
+  // Simulate a bid card
+  const testBidCard = {
+    id: "test-123",
+    title: "Kitchen Renovation Test",
+    project_type: "kitchen_renovation",
+    zip_code: "33316",
+    timeline: "2-3 months",
+    urgency_level: "standard",
+    user_scope_notes: "Need to update cabinets, countertops, and appliances",
+    completion_percentage: 45,
+    ready_for_conversion: false,
+    budget_range_min: 15000,
+    budget_range_max: 25000,
+    contractor_size_preference: "medium",
+    quality_expectations: "high",
+    materials_specified: ["quartz countertops", "soft-close cabinets"],
+    special_requirements: ["licensed contractor", "evening work possible"]
+  };
+
+  const handleButtonClick = () => {
+    console.log("Button clicked - bid card ready:", testBidCard.ready_for_conversion);
+    addTestResult(`✓ Button click handler called`);
+    
+    if (testBidCard.ready_for_conversion) {
+      addTestResult(`✓ Would call onReview() - bid card is ready`);
+    } else {
+      addTestResult(`✓ Opening modal - bid card not ready (${testBidCard.completion_percentage}% complete)`);
+      setShowModal(true);
+    }
+  };
+
+  const addTestResult = (result: string) => {
+    setTestResults(prev => [...prev, result]);
+  };
+
+  useEffect(() => {
+    // Test that the modal can receive bid card context
+    if (showModal) {
+      addTestResult(`✓ Modal opened with bid card context`);
+      addTestResult(`  - Bid card ID: ${testBidCard.id}`);
+      addTestResult(`  - Project type: ${testBidCard.project_type}`);
+      addTestResult(`  - Completion: ${testBidCard.completion_percentage}%`);
+      
+      // Test API endpoint availability
+      testApiEndpoints();
+    }
+  }, [showModal]);
+
+  const testApiEndpoints = async () => {
+    // Test CIA conversation endpoint
+    try {
+      const response = await fetch("/api/cia/conversation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: `test-session-${Date.now()}`,
+          message: "Test message",
+          potential_bid_card_id: testBidCard.id,
+          project_context: {
+            bid_card_id: testBidCard.id,
+            project_type: testBidCard.project_type,
+            editing_mode: true
+          }
+        })
+      });
+      
+      if (response.ok) {
+        addTestResult(`✓ CIA API endpoint is accessible`);
+      } else {
+        addTestResult(`⚠ CIA API returned ${response.status}`);
+      }
+    } catch (error) {
+      addTestResult(`✗ CIA API error: ${error}`);
+    }
+
+    // Test potential bid card GET endpoint
+    try {
+      const response = await fetch(`/api/cia/potential-bid-cards/${testBidCard.id}`);
+      if (response.ok || response.status === 404) {
+        addTestResult(`✓ Potential bid card API is accessible`);
+      } else {
+        addTestResult(`⚠ Bid card API returned ${response.status}`);
+      }
+    } catch (error) {
+      addTestResult(`✗ Bid card API error: ${error}`);
+    }
+  };
+
+  const formatBidCardContext = () => {
+    const fields = [];
+    
+    if (testBidCard.project_type) fields.push(`Project Type: ${testBidCard.project_type}`);
+    if (testBidCard.user_scope_notes) fields.push(`Description: ${testBidCard.user_scope_notes}`);
+    if (testBidCard.zip_code) fields.push(`Location: ${testBidCard.zip_code}`);
+    if (testBidCard.urgency_level) fields.push(`Urgency: ${testBidCard.urgency_level}`);
+    if (testBidCard.timeline) fields.push(`Timeline: ${testBidCard.timeline}`);
+    if (testBidCard.contractor_size_preference) fields.push(`Contractor Preference: ${testBidCard.contractor_size_preference}`);
+    if (testBidCard.materials_specified?.length) fields.push(`Materials: ${testBidCard.materials_specified.join(", ")}`);
+    if (testBidCard.special_requirements?.length) fields.push(`Requirements: ${testBidCard.special_requirements.join(", ")}`);
+    if (testBidCard.budget_range_min || testBidCard.budget_range_max) {
+      const budget = [];
+      if (testBidCard.budget_range_min) budget.push(`$${testBidCard.budget_range_min.toLocaleString()}`);
+      if (testBidCard.budget_range_max) budget.push(`$${testBidCard.budget_range_max.toLocaleString()}`);
+      fields.push(`Budget: ${budget.join(" - ")}`);
+    }
+
+    return `I'm reviewing my ${testBidCard.project_type || "project"} details before posting for bids. Here's what I have so far:\n\n${fields.join("\n")}\n\nIs there anything I should add or change to get better contractor responses?`;
+  };
+
+  return (
+    <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
+      <h1>Testing Potential Bid Card Modal Integration</h1>
+      
+      <div style={{ 
+        background: "white", 
+        padding: "20px", 
+        borderRadius: "8px", 
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        marginBottom: "20px"
+      }}>
+        <h2>{testBidCard.title}</h2>
+        <p>Type: {testBidCard.project_type}</p>
+        <p>Location: {testBidCard.zip_code}</p>
+        <p>Completion: {testBidCard.completion_percentage}%</p>
+        
+        <button 
+          onClick={handleButtonClick}
+          style={{
+            padding: "10px 20px",
+            background: "#2196f3",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+            marginTop: "10px"
+          }}
+        >
+          {testBidCard.ready_for_conversion ? "Review & Get Bids" : "Complete Project Details"}
+        </button>
+      </div>
+
+      {/* Test Results */}
+      <div style={{
+        background: "#f5f5f5",
+        padding: "20px",
+        borderRadius: "8px",
+        marginBottom: "20px"
+      }}>
+        <h3>Test Results:</h3>
+        {testResults.length === 0 ? (
+          <p>Click the button to test...</p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {testResults.map((result, i) => (
+              <li key={i} style={{ marginBottom: "5px" }}>{result}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Mock Modal */}
+      {showModal && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0,0,0,0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: "white",
+            padding: "30px",
+            borderRadius: "12px",
+            maxWidth: "800px",
+            width: "90%",
+            maxHeight: "80vh",
+            overflow: "auto"
+          }}>
+            <h2>BidCardEditModal Component Would Be Here</h2>
+            
+            <div style={{ marginTop: "20px", padding: "15px", background: "#f0f0f0", borderRadius: "8px" }}>
+              <h3>Modal receives this context:</h3>
+              <pre style={{ fontSize: "12px", whiteSpace: "pre-wrap" }}>
+                {formatBidCardContext()}
+              </pre>
+            </div>
+
+            <div style={{ marginTop: "20px", padding: "15px", background: "#e3f2fd", borderRadius: "8px" }}>
+              <h3>CIA Chat Integration:</h3>
+              <ul>
+                <li>✓ UltimateCIAChat component loaded</li>
+                <li>✓ Session ID: edit-{testBidCard.id}-{Date.now()}</li>
+                <li>✓ Initial message with bid card context</li>
+                <li>✓ Project context passed to API</li>
+                <li>✓ Editing mode enabled</li>
+              </ul>
+            </div>
+
+            <div style={{ marginTop: "20px", padding: "15px", background: "#fff3e0", borderRadius: "8px" }}>
+              <h3>Homeowner Context Available:</h3>
+              <ul>
+                <li>• User preferences from user_memories table</li>
+                <li>• Previous project history</li>
+                <li>• Budget preferences</li>
+                <li>• Communication style</li>
+                <li>• Location and property details</li>
+              </ul>
+            </div>
+
+            <button 
+              onClick={() => setShowModal(false)}
+              style={{
+                marginTop: "20px",
+                padding: "10px 20px",
+                background: "#666",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+            >
+              Close Modal
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Mount the test component
+const root = ReactDOM.createRoot(document.getElementById("test-root")!);
+root.render(<TestPotentialBidCard />);

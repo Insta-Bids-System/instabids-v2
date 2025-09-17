@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+# System deps for Pillow (image encode) & timezone
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libjpeg-dev zlib1g-dev ca-certificates tzdata \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /srv
+# Install deps
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+# Copy full context (filtered by .dockerignore)
+COPY . /srv
+# Ensure module name collision is avoided: create realtime_app.py entrypoint
+COPY app.py /srv/realtime_app.py
+
+ENV PYTHONUNBUFFERED=1
+ENV PORT=5050
+
+# Build-time metadata (surfaced at /attest)
+ARG GIT_SHA=local-dev
+ARG IMAGE_DIGEST=unknown
+ENV GIT_SHA=${GIT_SHA}
+ENV IMAGE_DIGEST=${IMAGE_DIGEST}
+
+CMD ["python", "-m", "uvicorn", "realtime_app:app", "--host", "0.0.0.0", "--port", "5050"]

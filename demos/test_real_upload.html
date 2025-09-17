@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Real Image Upload</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Test Real Image Upload to Instabids</h1>
+    <input type="file" id="fileInput" accept="image/*" />
+    <button onclick="uploadImage()">Upload Image</button>
+    <div id="result"></div>
+    
+    <script>
+    // Initialize Supabase client
+    const supabaseUrl = 'https://xrhgrthdcaymxuqcgrmj.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyaGdydGhkY2F5bXh1cWNncm1qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2NTcyMDYsImV4cCI6MjA2OTIzMzIwNn0.BriGLA2FE_e_NJl8B-3ps1W6ZAuK6a5HpTwBGy-6rmE';
+    
+    const { createClient } = supabase;
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Demo user data
+    const demoUserId = '550e8400-e29b-41d4-a716-446655440001';
+    const demoBoardId = '550e8400-e29b-41d4-a716-446655440002';
+    
+    async function uploadImage() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Please select a file first');
+            return;
+        }
+        
+        const result = document.getElementById('result');
+        result.innerHTML = 'Uploading...';
+        
+        try {
+            // Generate filename
+            const timestamp = Date.now();
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${demoUserId}/${demoBoardId}/${timestamp}_upload.${fileExt}`;
+            
+            // Upload to storage
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                .from('inspiration')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+            
+            if (uploadError) {
+                throw uploadError;
+            }
+            
+            // Get public URL
+            const { data: { publicUrl } } = supabaseClient.storage
+                .from('inspiration')
+                .getPublicUrl(fileName);
+            
+            // Create database record
+            const { data: dbData, error: dbError } = await supabaseClient
+                .from('inspiration_images')
+                .insert({
+                    board_id: demoBoardId,
+                    homeowner_id: demoUserId,
+                    image_url: publicUrl,
+                    thumbnail_url: publicUrl,
+                    source: 'upload',
+                    tags: ['test', 'web-upload'],
+                    position: 10
+                })
+                .select()
+                .single();
+            
+            if (dbError) {
+                throw dbError;
+            }
+            
+            result.innerHTML = `
+                <h3>Success!</h3>
+                <p>Image uploaded to storage: ${fileName}</p>
+                <p>Database record created: ${dbData.id}</p>
+                <img src="${publicUrl}" style="max-width: 300px; margin-top: 10px;" />
+                <p><a href="${publicUrl}" target="_blank">View full image</a></p>
+            `;
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            result.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+        }
+    }
+    </script>
+</body>
+</html>

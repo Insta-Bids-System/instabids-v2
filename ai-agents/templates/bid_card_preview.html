@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Basic Meta Tags -->
+    <title>{{project_type}} Project - Instabids</title>
+    <meta name="description" content="{{project_type}} project in {{location_city}}{{location_state}}. Budget: {{budget_display}}. Timeline: {{timeline}}. Get qualified bids from pre-screened contractors.">
+    
+    <!-- Open Graph Meta Tags for Rich Previews -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Instabids">
+    <meta property="og:title" content="{{project_type}} Project - {{budget_display}}">
+    <meta property="og:description" content="{{project_type}} project in {{location_city}}{{location_state}}. Timeline: {{timeline}}. Click to view details and submit your bid.">
+    <meta property="og:url" content="{{current_url}}">
+    <meta property="og:image" content="{{og_image_url}}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{project_type}} Project Preview">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@instabids">
+    <meta name="twitter:title" content="{{project_type}} Project - {{budget_display}}">
+    <meta name="twitter:description" content="{{project_type}} in {{location_city}}{{location_state}}. {{timeline}}. Submit your bid now.">
+    <meta name="twitter:image" content="{{og_image_url}}">
+    
+    <!-- WhatsApp and Telegram Preview -->
+    <meta property="og:image:type" content="image/png">
+    <meta name="theme-color" content="#667eea">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .bid-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            transform: translateY(20px);
+            animation: slideUp 0.6s ease-out forwards;
+        }
+        
+        @keyframes slideUp {
+            to {
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .project-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: capitalize;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header .subtitle {
+            font-size: 18px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        
+        .content {
+            padding: 40px 32px;
+        }
+        
+        .highlight-banner {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.2);
+        }
+        
+        .highlight-banner h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .highlight-banner p {
+            font-size: 16px;
+            opacity: 0.95;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .detail-item {
+            background: #f8fafc;
+            padding: 24px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .detail-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .detail-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+            letter-spacing: 0.8px;
+        }
+        
+        .detail-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.3;
+        }
+        
+        .cta-section {
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            padding: 32px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 32px;
+        }
+        
+        .cta-section h3 {
+            color: #1e293b;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .cta-section p {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 18px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .instabids-brand {
+            text-align: center;
+            padding: 32px;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        
+        .instabids-brand img {
+            height: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .instabids-brand p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 24px 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .content {
+                padding: 24px 20px;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .cta-section {
+                padding: 24px;
+            }
+        }
+        
+        .project-icons {
+            kitchen_remodel: '🏠',
+            bathroom_remodel: '🚿',
+            roofing: '🏘️',
+            flooring: '🪵',
+            painting: '🎨',
+            landscaping: '🌿',
+            electrical: '⚡',
+            plumbing: '🔧',
+            hvac: '🌡️',
+            windows: '🪟',
+            siding: '🏗️',
+            deck: '🪜',
+            fence: '🚧',
+            driveway: '🛣️',
+            other: '🔨'
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="bid-card">
+            <div class="header">
+                <div class="header-content">
+                    <span class="project-icon">{{project_icon}}</span>
+                    <h1>{{project_type}}</h1>
+                    <p class="subtitle">{{location_city}}{{location_state}} • {{timeline}}</p>
+                </div>
+            </div>
+            
+            <div class="content">
+                <div class="highlight-banner">
+                    <h2>{{budget_display}}</h2>
+                    <p>Pre-screened project ready for qualified contractors</p>
+                </div>
+                
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">💰 Budget Range</div>
+                        <div class="detail-value">{{budget_display}}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">⏰ Timeline</div>
+                        <div class="detail-value">{{timeline}}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">📍 Location</div>
+                        <div class="detail-value">{{location_city}}{{location_state}}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">🎯 Project ID</div>
+                        <div class="detail-value">#{{bid_card_id_short}}</div>
+                    </div>
+                </div>
+                
+                <div class="cta-section">
+                    <h3>Ready to Submit Your Bid?</h3>
+                    <p>This project has been pre-qualified and is ready for contractor bids. Click below to view full details and submit your proposal.</p>
+                    <a href="{{api_url}}" class="cta-button">View Full Project Details</a>
+                </div>
+            </div>
+            
+            <div class="instabids-brand">
+                <p><strong>Powered by Instabids</strong><br>
+                AI-powered contractor marketplace • No sales meetings required</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple analytics
+        if (window.location.search.includes('utm_source')) {
+            console.log('Link preview viewed from social media');
+        }
+        
+        // Auto-redirect to API after viewing preview (optional)
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auto_redirect') === 'true') {
+                window.location.href = '{{api_url}}';
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

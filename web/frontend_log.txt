@@ -1,0 +1,230 @@
+
+> instabids-web@0.1.0 dev
+> vite
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
+Port 5175 is in use, trying another one...
+Port 5176 is in use, trying another one...
+
+  [32m[1mVITE[22m v5.4.19[39m  [2mready in [0m[1m244[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5177[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m2:48:12 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "antd" from "src/components/bidcards/BidCardMarketplace.tsx". Does the file exist?
+[2m2:48:12 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "antd" from "src/components/bidcards/ContractorBidCard.tsx". Does the file exist?
+[2m2:48:13 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "antd" from "src/components/bidcards/BidCardMarketplace.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/Not John Or Justin/Documents/instabids/web/src/components/bidcards/BidCardMarketplace.tsx[39m:22:7
+[33m  36 |    Checkbox,
+  37 |    Radio
+  38 |  } from "antd";
+     |          ^
+  39 |  import {
+  40 |    SearchOutlined,[39m
+      at TransformPluginContext._formatError (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49253:16)
+      at normalizeUrl (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64291:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64423:39
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64350:7)
+      at async PluginContainer.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:51977:27)
+      at async viteTransformMiddleware (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:62105:24)
+[2m2:48:13 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "antd" from "src/components/bidcards/ContractorBidCard.tsx". Does the file exist?
+[2m2:51:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/IrisChat.tsx, /src/index.css[22m
+[2m2:51:30 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "antd" from "src/components/bidcards/BidCardMarketplace.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/Not John Or Justin/Documents/instabids/web/src/components/bidcards/BidCardMarketplace.tsx[39m:22:7
+[33m  36 |    Checkbox,
+  37 |    Radio
+  38 |  } from "antd";
+     |          ^
+  39 |  import {
+  40 |    SearchOutlined,[39m
+      at TransformPluginContext._formatError (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49253:16)
+      at normalizeUrl (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64291:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64423:39
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64350:7)
+      at async PluginContainer.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:51977:27)
+      at async viteTransformMiddleware (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:62105:24)
+[2m2:51:30 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "antd" from "src/components/bidcards/ContractorBidCard.tsx". Does the file exist?
+[2m2:51:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/IrisChat.tsx, /src/index.css[22m
+[2m2:51:44 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "antd" from "src/components/bidcards/BidCardMarketplace.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36mC:/Users/Not John Or Justin/Documents/instabids/web/src/components/bidcards/BidCardMarketplace.tsx[39m:22:7
+[33m  36 |    Checkbox,
+  37 |    Radio
+  38 |  } from "antd";
+     |          ^
+  39 |  import {
+  40 |    SearchOutlined,[39m
+      at TransformPluginContext._formatError (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49258:41)
+      at TransformPluginContext.error (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49253:16)
+      at normalizeUrl (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64291:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64423:39
+      at async Promise.all (index 4)
+      at async TransformPluginContext.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:64350:7)
+      at async PluginContainer.transform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:49099:18)
+      at async loadAndTransform (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:51977:27)
+      at async viteTransformMiddleware (file:///C:/Users/Not%20John%20Or%20Justin/Documents/instabids/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:62105:24)
+[2m2:51:44 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "antd" from "src/components/bidcards/ContractorBidCard.tsx". Does the file exist?
+[2m3:03:57 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/BoardView.tsx, /src/index.css[22m
+[2m3:45:53 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/BoardView.tsx, /src/index.css[22m
+[2m3:50:48 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/pages/LoginPage.tsx.tmp.16928.1754337048235[22m
+[2m3:50:48 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/LoginPage.tsx, /src/index.css[22m
+[2m4:00:23 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ContractorDashboardPage.tsx, /src/index.css[22m
+[2m4:02:58 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/contractor/ContractorDashboard.tsx[22m
+[2m4:10:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/hooks/useAdminAuth.tsx, /src/index.css[22m
+[2m4:10:32 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/hooks/useAdminAuth.tsx, /src/index.css[22m
+[2m6:56:11 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/contractor/ContractorDashboard.tsx[22m
+[2m7:05:51 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/services/api.ts[22m
+[2m7:06:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/contractor/ContractorDashboard.tsx[22m
+[2m7:13:18 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:13:43 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:15:27 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:15:35 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:17:16 PM[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mantd, @ant-design/icons, dayjs, dayjs/plugin/relativeTime[32m[39m
+[2m7:17:16 PM[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[2m7:34:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m7:34:10 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:34:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css, /src/pages/ContractorDashboardPage.tsx, /src/components/auth/ProtectedRoute.tsx, /src/pages/ChatPage.tsx, /src/pages/LoginPage.tsx, /src/pages/HomePage.tsx, /src/pages/contractor/ContractorLandingPage.tsx, /src/pages/SignupPage.tsx, /src/pages/ProjectDetailPage.tsx, /src/pages/DashboardPage.tsx, /src/components/HomeownerProjectWorkspace.tsx, /src/contexts/BidCardContext.tsx, /src/components/contractor/ContractorDashboard.tsx, /src/components/inspiration/InspirationDashboard.tsx, /src/components/inspiration/BoardView.tsx, /src/components/inspiration/AIAssistant/IrisChat.tsx, /src/components/inspiration/ImageUploader/ImageUploader.tsx[22m
+[2m7:34:10 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/BidCardContext.tsx[22m Could not Fast Refresh ("useBidCard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:34:10 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css, /src/components/messaging/MessageInput.tsx, /src/pages/ContractorDashboardPage.tsx, /src/components/bidcards/BidCardMarketplace.tsx, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:34:16 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m7:34:16 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:34:16 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css, /src/pages/ContractorDashboardPage.tsx, /src/components/auth/ProtectedRoute.tsx, /src/pages/ChatPage.tsx, /src/pages/LoginPage.tsx, /src/pages/HomePage.tsx, /src/pages/contractor/ContractorLandingPage.tsx, /src/pages/SignupPage.tsx, /src/pages/ProjectDetailPage.tsx, /src/pages/DashboardPage.tsx, /src/components/HomeownerProjectWorkspace.tsx, /src/contexts/BidCardContext.tsx, /src/components/contractor/ContractorDashboard.tsx, /src/components/inspiration/InspirationDashboard.tsx, /src/components/inspiration/BoardView.tsx, /src/components/inspiration/AIAssistant/IrisChat.tsx, /src/components/inspiration/ImageUploader/ImageUploader.tsx[22m
+[2m7:34:16 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/BidCardContext.tsx[22m Could not Fast Refresh ("useBidCard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:34:16 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css, /src/components/messaging/MessageInput.tsx, /src/pages/ContractorDashboardPage.tsx, /src/components/bidcards/BidCardMarketplace.tsx, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:35:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m7:35:46 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/AuthContext.tsx[22m Could not Fast Refresh ("useAuth" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:35:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css, /src/pages/ContractorDashboardPage.tsx, /src/components/auth/ProtectedRoute.tsx, /src/pages/ChatPage.tsx, /src/pages/LoginPage.tsx, /src/pages/HomePage.tsx, /src/pages/contractor/ContractorLandingPage.tsx, /src/pages/SignupPage.tsx, /src/pages/ProjectDetailPage.tsx, /src/pages/DashboardPage.tsx, /src/components/HomeownerProjectWorkspace.tsx, /src/contexts/BidCardContext.tsx, /src/components/contractor/ContractorDashboard.tsx, /src/components/inspiration/InspirationDashboard.tsx, /src/components/inspiration/BoardView.tsx, /src/components/inspiration/AIAssistant/IrisChat.tsx, /src/components/inspiration/ImageUploader/ImageUploader.tsx[22m
+[2m7:35:46 PM[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/contexts/BidCardContext.tsx[22m Could not Fast Refresh ("useBidCard" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
+[2m7:35:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css, /src/components/messaging/MessageInput.tsx, /src/pages/ContractorDashboardPage.tsx, /src/components/bidcards/BidCardMarketplace.tsx, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminLogin.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminHeader.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/types/bidCard.ts[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/InternalBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AlertToast.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminBidCardEnhanced.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/chat/CIAChat.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/EnhancedBidCard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AgentStatusPanel.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardMonitor.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/contractor/ContractorDashboard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/test/cia-signup-integration.test.js[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/ImageCategorizer.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/HomeownerProjectWorkspace.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/bidcards/HomeownerBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/index.ts[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/MessagingDemo.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/ImageUploader/ImageUploader.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/BoardCreator.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/chat/RealtimeWebRTCChat.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/chat/RealtimeCIAChat.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/ConversationList.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/messaging/MessageInput.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/DatabaseViewer.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/SystemMetrics.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/BoardView.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/admin/MainDashboard.tsx, /src/components/admin/BidCardMonitor.tsx, /src/components/admin/AgentStatusPanel.tsx, /src/components/admin/DatabaseViewer.tsx, /src/components/admin/BidCardMonitorEnhanced.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/bidcards/ContractorBidCard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/MessagingInterface.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/MessageThread.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardLifecycleView.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardMonitorEnhanced.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/chat/UltraInteractiveCIAChat.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/AIAssistant/IrisChat.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/IrisChat.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/InspirationDashboard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/MessagingDemo.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/pages/TestMessaging.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/services/openai-realtime.ts[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/bidcards/HomeownerBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/admin/AdminLoginPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/contractor/ContractorDashboard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/AuthContext.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/TestPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CIATestPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/SignupPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WebRTCTestPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/HomePage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/hooks/useAdminAuth.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ChatPage.tsx, /src/index.css, /src/test/MessagingDemo.tsx, /src/pages/HomePage.tsx, /src/contexts/BidCardContext.tsx, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/bidcards/ContractorBidCard.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/bidcards/BidCardMarketplace.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/admin/AdminDashboardPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/BidCardContext.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardLifecycleView.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/contractor/ContractorLandingPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ExternalBidCardLanding.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ProjectDetailPage.tsx, /src/index.css[22m
+[2m7:37:42 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/services/openai-realtime-websocket.ts[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AlertToast.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminBidCardEnhanced.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/ImageCategorizer.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/chat/RealtimeCIAChat.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/HomeownerProjectWorkspace.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/ConversationList.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/chat/RealtimeWebRTCChat.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/bidcards/BidCardMarketplace.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/SystemMetrics.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/ImageUploader/ImageUploader.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/MessagingInterface.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/admin/MainDashboard.tsx, /src/components/admin/BidCardMonitor.tsx, /src/components/admin/AgentStatusPanel.tsx, /src/components/admin/DatabaseViewer.tsx, /src/components/admin/BidCardMonitorEnhanced.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CIATestPage.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/MessageThread.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/ImageUploader/ImageUploader.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/contractor/ContractorDashboard.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/InspirationDashboard.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/MessagingDemo.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/chat/CIAChat.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/bidcards/ContractorBidCard.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/bidcards/HomeownerBidCard.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/hooks/useAdminAuth.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/HomePage.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/WebRTCTestPage.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/SignupPage.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/BoardView.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/IrisChat.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/ChatPage.tsx, /src/index.css, /src/test/MessagingDemo.tsx, /src/pages/HomePage.tsx, /src/contexts/BidCardContext.tsx, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/chat/RealtimeCIAChat.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/BidCardContext.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/DashboardPage.tsx, /src/index.css[22m
+[2m7:41:46 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/AIAssistant/IrisChat.tsx, /src/index.css[22m
+[2m7:42:29 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminLogin.tsx, /src/index.css[22m
+[2m7:42:39 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminLogin.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminBidCardEnhanced.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AdminHeader.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AgentStatusPanel.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/AlertToast.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardLifecycleView.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardMonitor.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/BidCardMonitorEnhanced.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/MainDashboard.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/admin/SystemMetrics.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/common/Button.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/inspiration/AIAssistant/IrisChat.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/messaging/MessageInput.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/contexts/BidCardContext.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/AuthCallbackPage.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/bidcards/ContractorBidCard.tsx[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/components/messaging/MessagingInterface.tsx[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/MessagingDemo.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/LoginPage.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/SignupPage.tsx, /src/index.css[22m
+[2m7:43:01 PM[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/test/test-messaging-api.tsx, /src/index.css[22m

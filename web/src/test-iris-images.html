@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Iris Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .image-item { border: 1px solid #ccc; padding: 10px; }
+        .image-item img { width: 100%; height: 200px; object-fit: cover; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #debug { background: #f8f9fa; padding: 15px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Test Iris Image Display</h1>
+    <button onclick="testIrisAPI()">Test Iris API</button>
+    <div id="debug"></div>
+    <div id="images" class="image-grid"></div>
+
+    <script>
+        async function testIrisAPI() {
+            const debugEl = document.getElementById('debug');
+            const imagesEl = document.getElementById('images');
+            
+            debugEl.textContent = 'Making API request...';
+            
+            try {
+                const response = await fetch('http://localhost:8008/api/iris/find-inspiration', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: 'farmhouse kitchen',
+                        search_query: 'farmhouse kitchen inspiration',
+                        homeowner_id: '550e8400-e29b-41d4-a716-446655440001'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                debugEl.textContent = `API Response:
+Status: ${response.status}
+Data: ${JSON.stringify(data, null, 2)}
+
+Inspiration Items Count: ${data.inspiration_items?.length || 0}`;
+
+                // Clear previous images
+                imagesEl.innerHTML = '';
+                
+                if (data.inspiration_items && data.inspiration_items.length > 0) {
+                    data.inspiration_items.forEach((item, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'image-item';
+                        itemDiv.innerHTML = `
+                            <img src="${item.image_url}" alt="${item.description}" 
+                                 onload="console.log('Image ${index} loaded successfully')" 
+                                 onerror="console.error('Image ${index} failed to load:', '${item.image_url}')" />
+                            <p>${item.description}</p>
+                        `;
+                        imagesEl.appendChild(itemDiv);
+                    });
+                } else {
+                    imagesEl.innerHTML = '<p>No images found in response</p>';
+                }
+                
+            } catch (error) {
+                debugEl.textContent = `Error: ${error.message}`;
+                console.error('Fetch error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

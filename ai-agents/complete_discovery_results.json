@@ -1,0 +1,165 @@
+[
+  {
+    "company_name": "Bright Light Installations LLC",
+    "website": "https://www.brightlightinstalls.com",
+    "phone": "(954) 555-2341",
+    "google_rating": 4.8,
+    "google_review_count": 127,
+    "location": "Pompano Beach, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 8,
+      "years_in_business": 8,
+      "has_fleet": true,
+      "has_warehouse": false,
+      "has_multiple_locations": false,
+      "service_scope": "local",
+      "certifications": [
+        "Licensed",
+        "Insured"
+      ],
+      "about_preview": "Family-owned business with 8 dedicated team members..."
+    },
+    "size_category": "small_business"
+  },
+  {
+    "company_name": "Holiday Heroes Lighting",
+    "website": "https://www.holidayheroes.net",
+    "phone": "(561) 555-8765",
+    "google_rating": 4.9,
+    "google_review_count": 89,
+    "location": "Boca Raton, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 4,
+      "years_in_business": 5,
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_multiple_locations": false,
+      "service_scope": "local",
+      "certifications": [
+        "Licensed",
+        "Insured"
+      ],
+      "about_preview": "Local contractor serving the community..."
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Mike's Christmas Lights",
+    "website": null,
+    "phone": "(954) 555-3333",
+    "google_rating": 4.6,
+    "google_review_count": 42,
+    "location": "Deerfield Beach, FL",
+    "website_data": {
+      "enrichment_complete": false
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Professional Holiday Decorators",
+    "website": "https://www.proholidaydecor.com",
+    "phone": "(561) 555-9999",
+    "google_rating": 4.7,
+    "google_review_count": 234,
+    "location": "Delray Beach, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 25,
+      "years_in_business": 15,
+      "has_fleet": true,
+      "has_warehouse": true,
+      "has_multiple_locations": true,
+      "service_scope": "regional",
+      "certifications": [
+        "Licensed",
+        "Insured",
+        "BBB A+"
+      ],
+      "about_preview": "Leading holiday lighting company with 25+ professionals serving South Florida..."
+    },
+    "size_category": "regional_company"
+  },
+  {
+    "company_name": "Joe's Handyman & Holiday Lights",
+    "website": "https://www.joeshandyman.com",
+    "phone": "(954) 555-1111",
+    "google_rating": 4.5,
+    "google_review_count": 18,
+    "location": "Lighthouse Point, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 2,
+      "years_in_business": 3,
+      "has_fleet": false,
+      "has_warehouse": false,
+      "has_multiple_locations": false,
+      "service_scope": "local",
+      "certifications": [
+        "Insured"
+      ],
+      "about_preview": "Owner-operated service providing personal attention..."
+    },
+    "size_category": "owner_operator"
+  },
+  {
+    "company_name": "Elite Lighting Systems",
+    "website": "https://www.elitelightingsystems.com",
+    "phone": "(561) 555-4444",
+    "google_rating": 5.0,
+    "google_review_count": 312,
+    "location": "West Palm Beach, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 25,
+      "years_in_business": 15,
+      "has_fleet": true,
+      "has_warehouse": true,
+      "has_multiple_locations": true,
+      "service_scope": "regional",
+      "certifications": [
+        "Licensed",
+        "Insured",
+        "BBB A+"
+      ],
+      "about_preview": "Leading holiday lighting company with 25+ professionals serving South Florida..."
+    },
+    "size_category": "regional_company"
+  },
+  {
+    "company_name": "Tom's Quick Lights",
+    "website": null,
+    "phone": "(954) 555-2222",
+    "google_rating": 4.4,
+    "google_review_count": 8,
+    "location": "Coral Springs, FL",
+    "website_data": {
+      "enrichment_complete": false
+    },
+    "size_category": "solo_handyman"
+  },
+  {
+    "company_name": "Sunshine State Decorating",
+    "website": "https://www.sunshinestatedecor.com",
+    "phone": "(561) 555-6666",
+    "google_rating": 4.8,
+    "google_review_count": 156,
+    "location": "Boynton Beach, FL",
+    "website_data": {
+      "enrichment_complete": true,
+      "team_size": 8,
+      "years_in_business": 8,
+      "has_fleet": true,
+      "has_warehouse": false,
+      "has_multiple_locations": false,
+      "service_scope": "local",
+      "certifications": [
+        "Licensed",
+        "Insured"
+      ],
+      "about_preview": "Family-owned business with 8 dedicated team members..."
+    },
+    "size_category": "small_business"
+  }
+]

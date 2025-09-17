@@ -1,0 +1,152 @@
+# Single source of truth for the “LEGO blocks” that make up the COIA agent.
+# This file enumerates exactly which components we keep and treat as canonical.
+
+agent:
+  orchestrator:
+    module: ai-agents/agents/coia/unified_graph.py
+    class_or_function: UnifiedCoIAGraph / create_unified_coia_system
+    notes: >
+      This is the only file that decides what runs. It wires nodes and sets
+      routing/entry points. Checkpointer selected here (Supabase REST preferred,
+      MemorySaver fallback).
+
+  state:
+    module: ai-agents/agents/coia/unified_state.py
+    typedef: UnifiedCoIAState
+    notes: >
+      Single state representation. Keep merges additive; avoid wiping complex
+      dicts/lists; use append for messages.
+
+  nodes:
+    - module: ai-agents/agents/coia/extraction_node.py
+      function: extraction_node
+    - module: ai-agents/agents/coia/langgraph_nodes.py
+      function: mode_detector_node
+    - module: ai-agents/agents/coia/langgraph_nodes.py
+      function: conversation_node
+    - module: ai-agents/agents/coia/langgraph_nodes.py
+      function: research_node
+    - module: ai-agents/agents/coia/langgraph_nodes.py
+      function: intelligence_node
+    - module: ai-agents/agents/coia/bid_card_search_node_fixed.py
+      function: bid_card_search_node
+    - module: ai-agents/agents/coia/bid_submission_node.py
+      function: bid_submission_node
+    - module: ai-agents/agents/coia/bid_submission_node.py
+      function: account_creation_node
+  notes: >
+    langgraph_nodes also contains a duplicate account_creation_node; we treat
+    bid_submission_node.py’s account_creation_node as node-of-record.
+
+tools:
+  facade:
+    module: ai-agents/agents/coia/tools.py
+    class: COIATools
+    export: coia_tools
+    methods_selected:
+      research_primary: web_search_company
+      research_internals:
+        - _tavily_discover_contractor_pages
+        - _extract_website_intelligence
+        - _search_business_web   # fallback only
+      bid_search_helper: search_bid_cards
+      profile_build: build_contractor_profile
+      account_creation: create_contractor_account
+    notes: >
+      This is the single façade. Move all other variants to archive. Consider
+      flags to control DB writes (e.g., WRITE_LEADS_ON_RESEARCH).
+
+memory:
+  state_manager:
+    module: ai-agents/agents/coia/state_management/state_manager.py
+    class: UnifiedStateManager
+    responsibilities:
+      - unified_conversation_memory upsert/select
+      - unified_conversations ensure/insert
+      - contractor_leads upsert (opportunistic)
+    invoked_by:
+      - unified_graph.py::invoke_coia_landing_page (restore/merge pre-invoke)
+    extend_optional:
+      - invoke_coia_chat
+      - invoke_coia_research
+      - invoke_coia_intelligence
+    notes: >
+      This is the single state manager of record. Update imports elsewhere if
+      duplicates exist.
+
+  checkpointer:
+    module: ai-agents/agents/coia/mcp_supabase_checkpointer.py
+    table: langgraph_checkpoints
+    fallback: MemorySaver
+    id_conventions:
+      chat:
+        thread_id: contractor_lead_id or session_id
+        checkpoint_ns: coia_chat
+        checkpoint_id: chat_${thread_id}
+      research:
+        thread_id: session_id
+        checkpoint_ns: coia_research
+        checkpoint_id: research_${session_id}
+      intelligence:
+        thread_id: session_id
+        checkpoint_ns: coia_intelligence
+        checkpoint_id: intelligence_${session_id}
+      landing:
+        thread_id: contractor_lead_id  # landing-${uuid12} if none provided
+        checkpoint_ns: coia_landing
+      bidcard:
+        thread_id: contractor_lead_id  # bidcard-${uuid12} if none provided
+        checkpoint_ns: coia_bidcard
+        checkpoint_id: bidcard_${thread_id}
+
+helpers:
+  prompts:
+    module: ai-agents/agents/coia/prompts.py
+    functions: [get_prompt_for_interface]
+  mode_detector:
+    module: ai-agents/agents/coia/fast_mode_detector.py
+    functions: [fast_detect_mode]
+  adapters:
+    - module: adapters/contractor_context.py
+      class_or_function: ContractorContextAdapter
+      used_by: tools.search_bid_cards and unified_graph bid_card_link preload
+  streaming_optional:
+    - ai-agents/agents/coia/streaming_chat_router.py
+    - ai-agents/agents/coia/streaming_handler.py
+
+env:
+  required:
+    - ANTHROPIC_API_KEY          # for Claude in langgraph_nodes/extraction
+    - SUPABASE_URL               # used by database/SupabaseDB
+    - SUPABASE_ANON_KEY          # used by database/SupabaseDB
+  recommended:
+    - TAVILY_API_KEY             # for real Tavily discovery
+  optional:
+    - OPENAI_API_KEY             # optional GPT extraction + streaming helper
+
+flags:
+  USE_TAVILY: true
+  WRITE_LEADS_ON_RESEARCH: true
+  USE_CLAUDE: true
+  USE_OPENAI: false
+
+decisions:
+  bid_search_source_of_truth: node_db_query   # node uses DB select; tools adapter complements
+  account_creation_source_of_truth: tools_facade
+  profile_build_writes: gated_by_flag
+
+archive_list:
+  - ai-agents/agents/coia/bid_card_search_node.py
+  - ai-agents/agents/coia/tools_real.py
+  - ai-agents/agents/coia/tools_real_extraction.py
+  - ai-agents/agents/coia/openai_o3_agent.py
+  - ai-agents/agents/coia/intelligent_research_agent.py
+  - ai-agents/agents/coia/mode_detector_fix.py
+  - ai-agents/agents/coia/account_creation_fallback.py
+  - ai-agents/agents/coia/persistent_memory.py.backup
+  - ai-agents/agents/coia/supabase_checkpointer_rest.py.backup
+  - ai-agents/agents/coia/unified_state_backup.py.backup
+  - ai-agents/agents/coia/unified_state_fixed.py.backup
+  - ai-agents/agents/coia/state.py
+
+# End of Selected Set

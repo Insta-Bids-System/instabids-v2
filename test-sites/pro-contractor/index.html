@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orlando Home Pros - Professional Remodeling Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 60px 0;
+            background-color: white;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .cta-button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .quote-wizard {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin: 40px auto;
+            max-width: 600px;
+            display: none;
+        }
+        
+        .step {
+            display: none;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        .progress-bar {
+            background-color: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            background-color: #28a745;
+            height: 100%;
+            width: 0;
+            transition: width 0.3s;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #28a745;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .success-screen {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+        
+        .checkmark {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        nav {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        nav ul {
+            list-style: none;
+            display: flex;
+            padding: 20px 0;
+        }
+        
+        nav li {
+            margin-right: 30px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: #212529;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Orlando Home Pros</h1>
+            <p>Transform Your Home with Central Florida's Premier Remodeling Team</p>
+        </div>
+    </header>
+    
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#testimonials">Testimonials</a></li>
+                <li><a href="#quote" onclick="startQuoteWizard()">Get Quote</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <div class="hero">
+        <div class="container">
+            <h2>Ready to Transform Your Space?</h2>
+            <p>Get a personalized quote in just 2 minutes</p>
+            <a href="#quote" class="cta-button" onclick="startQuoteWizard()">Start Your Free Quote</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="quote-wizard" class="quote-wizard">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            
+            <!-- Step 1: Contact Info -->
+            <div class="step active" id="step-1">
+                <h3>Step 1: Let's Get to Know You</h3>
+                <p>Tell us how to reach you about your project</p>
+                
+                <div class="form-group">
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="closeWizard()">Cancel</button>
+                    <button class="btn btn-primary" onclick="nextStep()">Next</button>
+                </div>
+            </div>
+            
+            <!-- Step 2: Project Details -->
+            <div class="step" id="step-2">
+                <h3>Step 2: Tell Us About Your Project</h3>
+                <p>What type of remodeling are you planning?</p>
+                
+                <div class="form-group">
+                    <label for="project_type">Project Type *</label>
+                    <select id="project_type" name="project_type" required>
+                        <option value="">Select a project type</option>
+                        <option value="kitchen">Kitchen Remodel</option>
+                        <option value="bathroom">Bathroom Remodel</option>
+                        <option value="basement">Basement Finishing</option>
+                        <option value="addition">Home Addition</option>
+                        <option value="whole-house">Whole House Remodel</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timeline">When do you want to start? *</label>
+                    <select id="timeline" name="timeline" required>
+                        <option value="">Select timeline</option>
+                        <option value="asap">As soon as possible</option>
+                        <option value="1-month">Within 1 month</option>
+                        <option value="3-months">Within 3 months</option>
+                        <option value="6-months">Within 6 months</option>
+                        <option value="planning">Just planning</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget">Approximate Budget Range</label>
+                    <select id="budget" name="budget">
+                        <option value="">Select budget</option>
+                        <option value="10-25k">$10,000 - $25,000</option>
+                        <option value="25-50k">$25,000 - $50,000</option>
+                        <option value="50-100k">$50,000 - $100,000</option>
+                        <option value="100k+">$100,000+</option>
+                        <option value="unsure">Not sure yet</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="details">Additional Details</label>
+                    <textarea id="details" name="details" rows="4" 
+                        placeholder="Tell us more about your vision..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="previousStep()">Back</button>
+                    <button class="btn btn-success" onclick="submitForm()">Get My Quote</button>
+                </div>
+            </div>
+            
+            <!-- Success Screen -->
+            <div class="success-screen" id="success-screen">
+                <div class="checkmark">✓</div>
+                <h3>Quote Request Received!</h3>
+                <p>Thank you for choosing Orlando Home Pros. We'll review your project details and send you a personalized quote within 24 hours.</p>
+                <button class="btn btn-primary" onclick="closeWizard()">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentStep = 1;
+        const totalSteps = 2;
+        
+        function startQuoteWizard() {
+            document.getElementById('quote-wizard').style.display = 'block';
+            updateProgress();
+            // Scroll to wizard
+            document.getElementById('quote-wizard').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function closeWizard() {
+            document.getElementById('quote-wizard').style.display = 'none';
+            // Reset form
+            currentStep = 1;
+            showStep(1);
+            document.querySelectorAll('input, select, textarea').forEach(el => el.value = '');
+        }
+        
+        function nextStep() {
+            // Validate current step
+            const currentStepEl = document.getElementById(`step-${currentStep}`);
+            const requiredFields = currentStepEl.querySelectorAll('[required]');
+            let valid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    field.style.borderColor = '#dc3545';
+                    valid = false;
+                } else {
+                    field.style.borderColor = '#dee2e6';
+                }
+            });
+            
+            if (!valid) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+                updateProgress();
+            }
+        }
+        
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+                updateProgress();
+            }
+        }
+        
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(`step-${step}`).classList.add('active');
+        }
+        
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+        
+        function submitForm() {
+            // Validate step 2
+            const step2 = document.getElementById('step-2');
+            const requiredFields = step2.querySelectorAll('[required]');
+            let valid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value) {
+                    field.style.borderColor = '#dc3545';
+                    valid = false;
+                } else {
+                    field.style.borderColor = '#dee2e6';
+                }
+            });
+            
+            if (!valid) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Collect all form data
+            const formData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                project_type: document.getElementById('project_type').value,
+                timeline: document.getElementById('timeline').value,
+                budget: document.getElementById('budget').value,
+                details: document.getElementById('details').value
+            };
+            
+            console.log('Form submitted:', formData);
+            
+            // Show success screen
+            document.querySelectorAll('.step').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.getElementById('success-screen').style.display = 'block';
+            document.querySelector('.progress-bar').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

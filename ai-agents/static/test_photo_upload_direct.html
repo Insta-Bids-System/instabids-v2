@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Photo Upload Test</title>
+</head>
+<body>
+    <h1>Direct Photo Upload Test</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="photoFile" accept="image/*" required>
+        <button type="submit">Upload Photo</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('photoFile');
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Please select a file');
+            return;
+        }
+        
+        console.log('Uploading file:', file.name);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('photo_type', 'documentation');
+        
+        const propertyId = '550e8400-e29b-41d4-a716-446655440000';
+        const userId = '550e8400-e29b-41d4-a716-446655440001';
+        
+        try {
+            const response = await fetch(`http://localhost:8008/api/properties/${propertyId}/photos/upload?user_id=${userId}`, {
+                method: 'POST',
+                body: formData,
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Upload successful:', result);
+                document.getElementById('result').innerHTML = 
+                    '<h2>Success!</h2><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            } else {
+                const error = await response.text();
+                console.error('Upload failed:', error);
+                document.getElementById('result').innerHTML = 
+                    '<h2>Error!</h2><p>' + error + '</p>';
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            document.getElementById('result').innerHTML = 
+                '<h2>Network Error!</h2><p>' + error.message + '</p>';
+        }
+    });
+    </script>
+</body>
+</html>

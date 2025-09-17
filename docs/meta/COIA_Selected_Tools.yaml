@@ -1,0 +1,145 @@
+# Canonical selection of COIA components to keep/use going forward.
+# This file is the single source of truth for which tools/nodes/memory components
+# power the agent, regardless of what happened to be wired during experimentation.
+
+capabilities:
+
+  research:
+    primary:
+      module: ai-agents/agents/coia/tools.py
+      class: COIATools
+      method: web_search_company
+      env_required:
+        # Recommended; removes hard-coded key in _tavily_discover_contractor_pages
+        - TAVILY_API_KEY
+      notes: >
+        Uses Tavily discovery when website available; currently skips Playwright
+        for speed and populates website_data from Tavily only. Falls back to
+        synthesized data if no APIs present. Consider enabling optional GPT
+        extraction in _extract_website_intelligence when OPENAI_API_KEY is set.
+    internals_used:
+      # Internal helpers this chain calls (do not invoke directly from nodes)
+      - module: ai-agents/agents/coia/tools.py
+        class: COIATools
+        method: _tavily_discover_contractor_pages
+        env_required: [TAVILY_API_KEY]
+        notes: Move hard-coded key to env; keep try/catch and rate limits.
+      - module: ai-agents/agents/coia/tools.py
+        class: COIATools
+        method: _extract_website_intelligence
+        env_optional: [OPENAI_API_KEY]
+        notes: BeautifulSoup path always available; GPT optional path.
+      - module: ai-agents/agents/coia/tools.py
+        class: COIATools
+        method: _search_business_web
+        notes: Fast synthesized fallback; non-authoritative; keep for resilience.
+
+  bid_search:
+    primary_node:
+      module: ai-agents/agents/coia/bid_card_search_node_fixed.py
+      function: bid_card_search_node
+      notes: >
+        Authoritative DB query path (ZIP radius expansion). Prefer this as the
+        canonical search to avoid drift.
+    helper_tool:
+      module: ai-agents/agents/coia/tools.py
+      class: COIATools
+      method: search_bid_cards
+      notes: Uses adapters.contractor_context.ContractorContextAdapter to return
+        privacy-aware available projects and apply specialty filters.
+
+  profile_build:
+    primary:
+      module: ai-agents/agents/coia/tools.py
+      class: COIATools
+      method: build_contractor_profile
+      db_table: contractor_leads
+      config_flag: WRITE_LEADS_ON_RESEARCH
+      notes: >
+        Merges Google/Tavily/site/social signals; writes to contractor_leads.
+        Ensure schema alignment with Supabase before enabling in production.
+
+  account_creation:
+    primary:
+      module: ai-agents/agents/coia/tools.py
+      class: COIATools
+      method: create_contractor_account
+      db_table: contractors
+      notes: >
+        Authoritative creation path. To avoid duplication, have bid_submission_node
+        call this method rather than writing directly.
+
+  extraction:
+    primary_node:
+      module: ai-agents/agents/coia/extraction_node.py
+      function: extraction_node
+      notes: Entry node for extracting contractor/company details from messages.
+
+  messaging_llm:
+    anthropic:
+      used_by: ai-agents/agents/coia/langgraph_nodes.py
+      env: ANTHROPIC_API_KEY
+    openai_optional:
+      used_by:
+        - ai-agents/agents/coia/langgraph_nodes.py (optional)
+        - ai-agents/agents/coia/streaming_chat_router.py (streaming)
+      env: OPENAI_API_KEY
+
+memory:
+  state_manager:
+    module: ai-agents/agents/coia/state_management/state_manager.py
+    class: UnifiedStateManager
+    writes:
+      - unified_conversation_memory
+      - unified_conversations
+      - contractor_leads (opportunistic)
+    notes: >
+      Single state manager of record. invoke_coia_landing_page pre-merges memory;
+      optionally extend to chat/research/intelligence if desired.
+  checkpointer:
+    module: ai-agents/agents/coia/mcp_supabase_checkpointer.py
+    table: langgraph_checkpoints
+    fallback: MemorySaver
+    notes: >
+      Preferred LangGraph persistence. Ensure Supabase env set; otherwise graph
+      compiles with MemorySaver (ephemeral).
+
+entrypoints:
+  orchestrator:
+    module: ai-agents/agents/coia/unified_graph.py
+    state: ai-agents/agents/coia/unified_state.py
+    nodes:
+      - ai-agents/agents/coia/extraction_node.py::extraction_node
+      - ai-agents/agents/coia/langgraph_nodes.py::mode_detector_node
+      - ai-agents/agents/coia/langgraph_nodes.py::conversation_node
+      - ai-agents/agents/coia/langgraph_nodes.py::research_node
+      - ai-agents/agents/coia/langgraph_nodes.py::intelligence_node
+      - ai-agents/agents/coia/bid_card_search_node_fixed.py::bid_card_search_node
+      - ai-agents/agents/coia/bid_submission_node.py::bid_submission_node
+      - ai-agents/agents/coia/bid_submission_node.py::account_creation_node
+  streaming:
+    optional:
+      - ai-agents/agents/coia/streaming_chat_router.py
+      - ai-agents/agents/coia/streaming_handler.py
+
+env_flags:
+  USE_TAVILY: true        # prefer Tavily chain in research if installed and key present
+  WRITE_LEADS_ON_RESEARCH: true  # allow build_contractor_profile to write contractor_leads
+  USE_CLAUDE: true
+  USE_OPENAI: false
+
+archive_candidates:
+  - ai-agents/agents/coia/bid_card_search_node.py
+  - ai-agents/agents/coia/tools_real.py
+  - ai-agents/agents/coia/tools_real_extraction.py
+  - ai-agents/agents/coia/openai_o3_agent.py
+  - ai-agents/agents/coia/intelligent_research_agent.py
+  - ai-agents/agents/coia/mode_detector_fix.py
+  - ai-agents/agents/coia/account_creation_fallback.py
+  - ai-agents/agents/coia/persistent_memory.py.backup
+  - ai-agents/agents/coia/supabase_checkpointer_rest.py.backup
+  - ai-agents/agents/coia/unified_state_backup.py.backup
+  - ai-agents/agents/coia/unified_state_fixed.py.backup
+  - ai-agents/agents/coia/state.py
+
+# End of selection

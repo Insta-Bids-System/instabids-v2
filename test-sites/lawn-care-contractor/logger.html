@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Submission Logger</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            white-space: pre-wrap;
+        }
+        .log-entry {
+            border-bottom: 1px solid #0f0;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+        .timestamp {
+            color: #ff0;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>FORM SUBMISSION LOGGER</h1>
+    <button onclick="location.href='index.html'">Open Form</button>
+    <button onclick="checkSubmissions()">Check Submissions</button>
+    <button onclick="simulateSubmission()">Simulate AI Submission</button>
+    <div id="log"></div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        
+        // Override the form's localStorage to also write to a file
+        const originalSetItem = localStorage.setItem;
+        localStorage.setItem = function(key, value) {
+            originalSetItem.call(this, key, value);
+            if (key === 'greenLawnProSubmissions') {
+                const timestamp = new Date().toISOString();
+                logDiv.innerHTML += `<div class="log-entry"><span class="timestamp">[${timestamp}]</span> FORM SUBMISSION DETECTED!\n${value}</div>`;
+            }
+        };
+        
+        function checkSubmissions() {
+            const subs = localStorage.getItem('greenLawnProSubmissions');
+            if (!subs) {
+                logDiv.innerHTML += `<div class="log-entry">NO SUBMISSIONS FOUND IN THIS BROWSER</div>`;
+            } else {
+                const parsed = JSON.parse(subs);
+                logDiv.innerHTML += `<div class="log-entry">FOUND ${parsed.length} SUBMISSIONS:\n${JSON.stringify(parsed, null, 2)}</div>`;
+            }
+        }
+        
+        function simulateSubmission() {
+            const testData = {
+                timestamp: new Date().toISOString(),
+                data: {
+                    company_name: "AI Agent Test " + Date.now(),
+                    contact_name: "Test Bot",
+                    email: "test@bot.com",
+                    phone: "(555) 123-4567",
+                    message: "Test submission at " + new Date().toLocaleString()
+                }
+            };
+            
+            let subs = JSON.parse(localStorage.getItem('greenLawnProSubmissions') || '[]');
+            subs.push(testData);
+            localStorage.setItem('greenLawnProSubmissions', JSON.stringify(subs));
+            
+            logDiv.innerHTML += `<div class="log-entry">SIMULATED SUBMISSION ADDED</div>`;
+        }
+        
+        // Check on load
+        window.onload = function() {
+            logDiv.innerHTML += `<div class="log-entry">LOGGER STARTED AT ${new Date().toLocaleString()}</div>`;
+            checkSubmissions();
+        }
+    </script>
+</body>
+</html>

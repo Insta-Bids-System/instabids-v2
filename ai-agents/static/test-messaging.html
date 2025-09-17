@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaBids Messaging System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #666;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button.secondary {
+            background: #2196F3;
+        }
+        
+        button.secondary:hover {
+            background: #1976D2;
+        }
+        
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            background: white;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .message.homeowner {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .message.contractor {
+            background: #f3e5f5;
+            border-color: #9C27B0;
+        }
+        
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .message-content {
+            margin-bottom: 5px;
+        }
+        
+        .message-meta {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .filter-indicator {
+            color: #ff9800;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .conversation-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .conversation-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background: white;
+        }
+        
+        .conversation-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .conversation-item.active {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .unread-badge {
+            background: #ff5722;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            float: right;
+        }
+        
+        .test-status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .test-status.success {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .test-status.error {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        
+        .filter-rules {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-rule {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>InstaBids Messaging System Test</h1>
+    
+    <div class="test-status" id="status"></div>
+    
+    <div class="filter-rules">
+        <h3>Active Content Filters:</h3>
+        <div class="filter-rule">📞 Phone numbers → [PHONE REMOVED]</div>
+        <div class="filter-rule">📧 Email addresses → [EMAIL REMOVED]</div>
+        <div class="filter-rule">📍 Street addresses → [ADDRESS REMOVED]</div>
+        <div class="filter-rule">💬 Social media handles → [SOCIAL HANDLE REMOVED]</div>
+        <div class="filter-rule">📱 Contact requests → [CONTACT REQUEST REMOVED]</div>
+    </div>
+    
+    <div class="container">
+        <!-- Homeowner Panel -->
+        <div class="panel">
+            <h2>Homeowner View</h2>
+            
+            <div class="form-group">
+                <label>Bid Card ID:</label>
+                <select id="homeownerBidCard">
+                    <option value="">Select a bid card...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Conversations:</label>
+                <ul class="conversation-list" id="homeownerConversations"></ul>
+            </div>
+            
+            <div class="form-group">
+                <label>Send Message:</label>
+                <textarea id="homeownerMessage" placeholder="Type your message..."></textarea>
+            </div>
+            
+            <button onclick="sendHomeownerMessage()">Send Message</button>
+            <button class="secondary" onclick="sendBroadcast()">Broadcast to All</button>
+            
+            <h3>Messages:</h3>
+            <div class="messages" id="homeownerMessages"></div>
+        </div>
+        
+        <!-- Contractor Panel -->
+        <div class="panel">
+            <h2>Contractor View</h2>
+            
+            <div class="form-group">
+                <label>Bid Card ID:</label>
+                <select id="contractorBidCard">
+                    <option value="">Select a bid card...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Your Alias: <span id="contractorAlias">-</span></label>
+            </div>
+            
+            <div class="form-group">
+                <label>Send Message:</label>
+                <textarea id="contractorMessage" placeholder="Type your message..."></textarea>
+            </div>
+            
+            <button onclick="sendContractorMessage()">Send Message</button>
+            
+            <h3>Messages:</h3>
+            <div class="messages" id="contractorMessages"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8008/api';
+        
+        // Test data
+        const testHomeownerId = 'test-homeowner-' + Date.now();
+        const testContractorId = 'test-contractor-' + Date.now();
+        let currentConversationId = null;
+        let contractorAlias = null;
+        
+        // Initialize
+        async function init() {
+            try {
+                // Load bid cards
+                const response = await fetch(`${API_BASE}/bid-cards/search`);
+                const bidCards = await response.json();
+                
+                const homeownerSelect = document.getElementById('homeownerBidCard');
+                const contractorSelect = document.getElementById('contractorBidCard');
+                
+                bidCards.forEach(card => {
+                    const option1 = new Option(`${card.title} (${card.id})`, card.id);
+                    const option2 = new Option(`${card.title} (${card.id})`, card.id);
+                    homeownerSelect.add(option1);
+                    contractorSelect.add(option2);
+                });
+                
+                // Select first bid card if available
+                if (bidCards.length > 0) {
+                    homeownerSelect.value = bidCards[0].id;
+                    contractorSelect.value = bidCards[0].id;
+                    await loadConversations();
+                }
+                
+                updateStatus('Messaging system initialized', 'success');
+            } catch (error) {
+                updateStatus('Failed to initialize: ' + error.message, 'error');
+            }
+        }
+        
+        // Load conversations for homeowner
+        async function loadConversations() {
+            const bidCardId = document.getElementById('homeownerBidCard').value;
+            if (!bidCardId) return;
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/messages/conversations/${bidCardId}?user_type=homeowner&user_id=${testHomeownerId}`
+                );
+                const conversations = await response.json();
+                
+                const list = document.getElementById('homeownerConversations');
+                list.innerHTML = '';
+                
+                conversations.forEach(conv => {
+                    const li = document.createElement('li');
+                    li.className = 'conversation-item';
+                    li.innerHTML = `
+                        <strong>${conv.contractor_alias}</strong>
+                        ${conv.homeowner_unread_count > 0 ? 
+                            `<span class="unread-badge">${conv.homeowner_unread_count}</span>` : ''}
+                        <div style="font-size: 12px; color: #666;">
+                            Last message: ${conv.last_message_at ? new Date(conv.last_message_at).toLocaleString() : 'No messages'}
+                        </div>
+                    `;
+                    li.onclick = () => selectConversation(conv.id);
+                    list.appendChild(li);
+                });
+                
+            } catch (error) {
+                console.error('Failed to load conversations:', error);
+            }
+        }
+        
+        // Select conversation
+        async function selectConversation(conversationId) {
+            currentConversationId = conversationId;
+            
+            // Update UI
+            document.querySelectorAll('.conversation-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.conversation-item').classList.add('active');
+            
+            // Load messages
+            await loadMessages();
+        }
+        
+        // Load messages
+        async function loadMessages() {
+            if (!currentConversationId) return;
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/messages/conversation/${currentConversationId}/messages`
+                );
+                const messages = await response.json();
+                
+                // Display for homeowner
+                const homeownerDiv = document.getElementById('homeownerMessages');
+                homeownerDiv.innerHTML = messages.map(msg => `
+                    <div class="message ${msg.sender_type}">
+                        <div class="message-header">
+                            ${msg.sender_type === 'homeowner' ? 'You' : 'Contractor'}
+                            ${msg.content_filtered ? '<span class="filter-indicator">[Filtered]</span>' : ''}
+                        </div>
+                        <div class="message-content">${msg.filtered_content}</div>
+                        <div class="message-meta">
+                            ${new Date(msg.created_at).toLocaleString()}
+                            ${msg.filter_reasons.length > 0 ? 
+                                `<br>Filtered: ${msg.filter_reasons.map(r => r.category).join(', ')}` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Display for contractor (same messages, different perspective)
+                const contractorDiv = document.getElementById('contractorMessages');
+                contractorDiv.innerHTML = messages.map(msg => `
+                    <div class="message ${msg.sender_type}">
+                        <div class="message-header">
+                            ${msg.sender_type === 'contractor' ? 'You' : 'Homeowner'}
+                            ${msg.content_filtered ? '<span class="filter-indicator">[Filtered]</span>' : ''}
+                        </div>
+                        <div class="message-content">${msg.filtered_content}</div>
+                        <div class="message-meta">
+                            ${new Date(msg.created_at).toLocaleString()}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Mark as read
+                const unreadMessages = messages.filter(m => !m.is_read).map(m => m.id);
+                if (unreadMessages.length > 0) {
+                    await markMessagesRead(unreadMessages, 'homeowner');
+                }
+                
+            } catch (error) {
+                console.error('Failed to load messages:', error);
+            }
+        }
+        
+        // Send homeowner message
+        async function sendHomeownerMessage() {
+            const content = document.getElementById('homeownerMessage').value;
+            const bidCardId = document.getElementById('homeownerBidCard').value;
+            
+            if (!content || !bidCardId) {
+                alert('Please enter a message and select a bid card');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        sender_type: 'homeowner',
+                        sender_id: testHomeownerId,
+                        bid_card_id: bidCardId,
+                        conversation_id: currentConversationId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('homeownerMessage').value = '';
+                    updateStatus('Message sent successfully', 'success');
+                    await loadMessages();
+                    await loadConversations();
+                } else {
+                    updateStatus('Failed to send message: ' + result.detail, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Error sending message: ' + error.message, 'error');
+            }
+        }
+        
+        // Send contractor message
+        async function sendContractorMessage() {
+            const content = document.getElementById('contractorMessage').value;
+            const bidCardId = document.getElementById('contractorBidCard').value;
+            
+            if (!content || !bidCardId) {
+                alert('Please enter a message and select a bid card');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        sender_type: 'contractor',
+                        sender_id: testContractorId,
+                        bid_card_id: bidCardId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('contractorMessage').value = '';
+                    updateStatus('Message sent successfully', 'success');
+                    
+                    // Update contractor alias if new conversation
+                    if (!currentConversationId) {
+                        currentConversationId = result.conversation_id;
+                        await loadConversations();
+                    }
+                    
+                    await loadMessages();
+                } else {
+                    updateStatus('Failed to send message: ' + result.detail, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Error sending message: ' + error.message, 'error');
+            }
+        }
+        
+        // Send broadcast message
+        async function sendBroadcast() {
+            const content = prompt('Enter broadcast message:');
+            const bidCardId = document.getElementById('homeownerBidCard').value;
+            
+            if (!content || !bidCardId) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/messages/broadcast`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        sender_type: 'homeowner',
+                        sender_id: testHomeownerId,
+                        bid_card_id: bidCardId,
+                        recipient_type: 'all_contractors'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    updateStatus(
+                        `Broadcast sent to ${result.total_recipients} contractors. ` +
+                        `${result.content_filtered ? 'Content was filtered.' : ''}`,
+                        'success'
+                    );
+                } else {
+                    updateStatus('Failed to send broadcast: ' + result.detail, 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Error sending broadcast: ' + error.message, 'error');
+            }
+        }
+        
+        // Mark messages as read
+        async function markMessagesRead(messageIds, readerType) {
+            try {
+                await fetch(`${API_BASE}/messages/mark-read`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message_ids: messageIds,
+                        reader_type: readerType
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to mark messages as read:', error);
+            }
+        }
+        
+        // Update status
+        function updateStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `test-status ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    status.textContent = '';
+                    status.className = 'test-status';
+                }, 3000);
+            }
+        }
+        
+        // Test content filtering
+        window.testFiltering = async function() {
+            const testMessages = [
+                "Hi, I'm interested. Call me at 555-123-4567",
+                "My email is john@example.com",
+                "Visit my Instagram @contractorjohn",
+                "My office is at 123 Main Street, Suite 100",
+                "You can reach me at my cell",
+                "Text me at (555) 987-6543 for faster response"
+            ];
+            
+            for (const msg of testMessages) {
+                document.getElementById('contractorMessage').value = msg;
+                await sendContractorMessage();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        };
+        
+        // Initialize on load
+        init();
+        
+        // Refresh messages periodically
+        setInterval(() => {
+            if (currentConversationId) {
+                loadMessages();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+[
+  {
+    "test": "Photo upload API call",
+    "passed": true,
+    "details": "Response: I can see you've uploaded 1 image with some great design inspiration!\n\nI think this might be for you",
+    "timestamp": "2025-08-26T20:52:25.999801"
+  },
+  {
+    "test": "Inspiration photo upload",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:27.168966"
+  },
+  {
+    "test": "Repair keyword detection",
+    "passed": false,
+    "details": "Response: i'm here to help with your design project.",
+    "timestamp": "2025-08-26T20:52:29.618510"
+  },
+  {
+    "test": "GPT-4 detect_repair_need",
+    "passed": true,
+    "details": "Tool function triggered",
+    "timestamp": "2025-08-26T20:52:33.318380"
+  },
+  {
+    "test": "GPT-4 identify_preferences",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:36.052323"
+  },
+  {
+    "test": "Memory save call",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:38.798422"
+  },
+  {
+    "test": "Context retrieval",
+    "passed": true,
+    "details": "Context keys: ['inspiration_boards', 'project_context', 'design_preferences', 'previous_designs', 'conversations_from_other_agents', 'photos_from_unified_system', 'privacy_level']",
+    "timestamp": "2025-08-26T20:52:39.689981"
+  },
+  {
+    "test": "Room detection: kitchen",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:42.303613"
+  },
+  {
+    "test": "Room detection: bathroom",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:44.800093"
+  },
+  {
+    "test": "Room detection: bedroom",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:46.943325"
+  },
+  {
+    "test": "Room detection: living room",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:49.441504"
+  },
+  {
+    "test": "Room detection: backyard",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:52.136877"
+  },
+  {
+    "test": "Consultation suggestions",
+    "passed": true,
+    "details": "Count: 4",
+    "timestamp": "2025-08-26T20:52:54.920598"
+  },
+  {
+    "test": "Consultation follow-up",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:52:59.186682"
+  },
+  {
+    "test": "POST /api/iris/unified-chat",
+    "passed": true,
+    "details": "Status: 200",
+    "timestamp": "2025-08-26T20:53:01.247880"
+  },
+  {
+    "test": "GET /api/iris/context/de7a48f5-1dff-4ce9-af08-8ae0fcaf0c3f",
+    "passed": true,
+    "details": "Status: 200",
+    "timestamp": "2025-08-26T20:53:01.895398"
+  },
+  {
+    "test": "POST /api/iris/suggest-tool/image_upload",
+    "passed": false,
+    "details": "Status: 422",
+    "timestamp": "2025-08-26T20:53:01.900405"
+  },
+  {
+    "test": "GET /api/iris/potential-bid-cards/de7a48f5-1dff-4ce9-af08-8ae0fcaf0c3f",
+    "passed": true,
+    "details": "Status: 200",
+    "timestamp": "2025-08-26T20:53:01.903406"
+  },
+  {
+    "test": "GET /api/iris/health",
+    "passed": true,
+    "details": "Status: 200",
+    "timestamp": "2025-08-26T20:53:01.970554"
+  },
+  {
+    "test": "Complete context structure",
+    "passed": true,
+    "details": "Components: boards=True, project=True, prefs=True, photos=True",
+    "timestamp": "2025-08-26T20:53:02.587134"
+  },
+  {
+    "test": "Conversation memory",
+    "passed": false,
+    "details": "IRIS remembers blue preference",
+    "timestamp": "2025-08-26T20:53:09.827290"
+  },
+  {
+    "test": "Bid card trigger message",
+    "passed": true,
+    "details": "",
+    "timestamp": "2025-08-26T20:53:13.393388"
+  },
+  {
+    "test": "Potential bid cards created",
+    "passed": [],
+    "details": "Count: 0",
+    "timestamp": "2025-08-26T20:53:13.398595"
+  }
+]

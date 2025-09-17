@@ -1,0 +1,117 @@
+{
+  "identity": {
+    "bootstrap": "ai-agents/agents/coia/docs/ONBOARDING.md",
+    "agent_readme": "ai-agents/agents/coia/README.md",
+    "slash_command_agent": "ai-agents/agents/coia/docs/SLASH_COMMAND.md",
+    "slash_command_http_external": "docs/meta/COIA_SlashCommand.md"
+  },
+  "router": {
+    "fastapi_router": "ai-agents/routers/unified_coia_api.py"
+  },
+  "orchestrator": {
+    "graph": "ai-agents/agents/coia/unified_graph.py",
+    "state_schema": "ai-agents/agents/coia/unified_state.py"
+  },
+  "nodes": {
+    "extraction": "ai-agents/agents/coia/extraction_node.py",
+    "conversation_research_intelligence_mode": "ai-agents/agents/coia/langgraph_nodes.py",
+    "bid_card_search_zip_fixed": "ai-agents/agents/coia/bid_card_search_node_fixed.py",
+    "bid_submission_and_account_creation": "ai-agents/agents/coia/bid_submission_node.py"
+  },
+  "tools": {
+    "facade": "ai-agents/agents/coia/tools.py",
+    "prompts": "ai-agents/agents/coia/prompts.py"
+  },
+  "memory": {
+    "state_manager": "ai-agents/agents/coia/state_management/state_manager.py",
+    "checkpointer": "ai-agents/agents/coia/mcp_supabase_checkpointer.py",
+    "checkpoint_conventions_doc": "docs/meta/COIA_Memory_Paths.md"
+  },
+  "adapters": {
+    "contractor_context": "ai-agents/adapters/contractor_context.py"
+  },
+  "database": {
+    "db_wrapper": "ai-agents/database_simple.py"
+  },
+  "docs_inside_agent": {
+    "bootstrap": "ai-agents/agents/coia/docs/ONBOARDING.md",
+    "agent_slash_command": "ai-agents/agents/coia/docs/SLASH_COMMAND.md",
+    "landing_flow": "ai-agents/agents/coia/docs/LANDING_FLOW.md"
+  },
+  "deepagents_agents": {
+    "landing": "ai-agents/agents/coia/landing_deepagent.py",
+    "bidcard": "ai-agents/agents/coia/bidcard_deepagent.py"
+  },
+  "docs_external_meta": {
+    "selected_set": "docs/meta/COIA_Selected_Set.yaml",
+    "file_inventory": "docs/meta/COIA_File_Inventory.md",
+    "tooling_comparison": "docs/meta/COIA_Tooling_Comparison.md",
+    "memory_paths": "docs/meta/COIA_Memory_Paths.md",
+    "runtime_readme_copy": "docs/meta/COIA_Runtime_Readme.md"
+  },
+  "guardrails": {
+    "consent_required": true,
+    "single_contractor_write_path": "tools.create_contractor_account",
+    "bid_search_source_of_truth": "nodes.bid_card_search_zip_fixed",
+    "list_reducers_unique_capped": true
+  },
+  "flags_and_env": {
+    "flags": [
+      "USE_TAVILY",
+      "WRITE_LEADS_ON_RESEARCH",
+      "USE_DEEPAGENTS_LANDING",
+      "USE_DEEPAGENTS_BIDCARD"
+    ],
+    "required_env": [
+      "ANTHROPIC_API_KEY",
+      "SUPABASE_URL",
+      "SUPABASE_ANON_KEY"
+    ],
+    "optional_env": [
+      "OPENAI_API_KEY",
+      "GOOGLE_MAPS_API_KEY"
+    ]
+  },
+  "entrypoints": {
+    "landing": {
+      "router_path": "/landing",
+      "invoke_helper": "invoke_coia_landing_page",
+      "checkpoint_ns": "coia_landing",
+      "thread_id": "contractor_lead_id",
+      "restores_unified_memory": true
+    },
+    "chat": {
+      "router_path": "/chat",
+      "invoke_helper": "invoke_coia_chat",
+      "checkpoint_ns": "coia_chat",
+      "checkpoint_id_pattern": "chat_{thread_id}",
+      "thread_id": "contractor_lead_id || session_id",
+      "restores_unified_memory": false
+    },
+    "bidcard": {
+      "router_path": "/bid-card-link",
+      "invoke_helper": "invoke_coia_bid_card_link",
+      "checkpoint_ns": "coia_bidcard",
+      "checkpoint_id_pattern": "bidcard_{thread_id}",
+      "thread_id": "contractor_lead_id",
+      "requires_verification_token": true,
+      "preloads_contractor_context": true
+    },
+    "research": {
+      "router_path": "/research",
+      "invoke_helper": "invoke_coia_research",
+      "checkpoint_ns": "coia_research",
+      "thread_id": "session_id"
+    },
+    "intelligence": {
+      "router_path": "/intelligence",
+      "invoke_helper": "invoke_coia_intelligence",
+      "checkpoint_ns": "coia_intelligence",
+      "thread_id": "session_id"
+    }
+  },
+  "imports_for_other_agents": {
+    "zip_radius_bid_search_node": "from agents.coia.bid_card_search_node_fixed import bid_card_search_node",
+    "tavily_research_tool": "from agents.coia.tools import coia_tools  # await coia_tools.web_search_company(name, location)"
+  }
+}

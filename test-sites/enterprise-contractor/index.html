@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Remodeling Solutions - Commercial & Residential Excellence</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background-color: #000;
+            color: white;
+            padding: 20px 0;
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 40px;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-menu a:hover {
+            opacity: 0.8;
+        }
+        
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), 
+                        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23333" width="1200" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="24">Luxury Remodeling Background</text></svg>');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        .quote-section {
+            background-color: white;
+            padding: 80px 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .quote-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+        
+        .quote-info h2 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+        
+        .quote-info p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .trust-indicators {
+            display: flex;
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .trust-item {
+            text-align: center;
+        }
+        
+        .trust-item .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .trust-item .label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .quote-form {
+            background-color: #f8f9fa;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .form-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        
+        fieldset {
+            border: none;
+            margin-bottom: 30px;
+        }
+        
+        legend {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #444;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: white;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #000;
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+        }
+        
+        input:invalid:not(:placeholder-shown) {
+            border-color: #dc3545;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        input:invalid:not(:placeholder-shown) ~ .error-message {
+            display: block;
+        }
+        
+        .submit-btn {
+            background-color: #000;
+            color: white;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background-color: #333;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .captcha-placeholder {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #666;
+        }
+        
+        .privacy-notice {
+            font-size: 12px;
+            color: #666;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .success-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .success-content {
+            background-color: white;
+            padding: 60px;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .success-icon {
+            font-size: 60px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .success-content h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        
+        .success-content p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .close-btn {
+            background-color: #000;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .quote-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">Elite Remodeling Solutions</div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#portfolio">Portfolio</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="container">
+            <h1>Transforming Spaces, Exceeding Expectations</h1>
+            <p>Central Florida's Premier Commercial & Residential Remodeling Firm</p>
+        </div>
+    </section>
+    
+    <section class="quote-section" id="contact">
+        <div class="container">
+            <div class="quote-container">
+                <div class="quote-info">
+                    <h2>Start Your Project Today</h2>
+                    <p>From concept to completion, we deliver exceptional remodeling experiences for discerning clients across Central Florida.</p>
+                    <p>Our team of master craftsmen and project managers ensure your vision becomes reality, on time and within budget.</p>
+                    
+                    <div class="trust-indicators">
+                        <div class="trust-item">
+                            <div class="number">178</div>
+                            <div class="label">Projects Completed</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="number">4.8</div>
+                            <div class="label">Average Rating</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="number">15+</div>
+                            <div class="label">Years Experience</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quote-form">
+                    <h3 class="form-title">Request Your Consultation</h3>
+                    <form id="enterprise-quote" class="validated-form">
+                        <fieldset>
+                            <legend>Contact Information</legend>
+                            
+                            <div class="form-group">
+                                <label for="company">Company Name *</label>
+                                <input type="text" id="company" name="company" required 
+                                    placeholder="Your Company Name">
+                                <span class="error-message">Please enter your company name</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contact_name">Contact Person *</label>
+                                <input type="text" id="contact_name" name="contact_name" required 
+                                    placeholder="Full Name">
+                                <span class="error-message">Please enter contact person's name</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Email Address *</label>
+                                <input type="email" id="email" name="email" required 
+                                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                                    placeholder="name@company.com">
+                                <span class="error-message">Please enter a valid email address</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone">Phone Number *</label>
+                                <input type="tel" id="phone" name="phone" required
+                                    pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                                    placeholder="555-123-4567">
+                                <span class="error-message">Please use format: 555-123-4567</span>
+                            </div>
+                        </fieldset>
+                        
+                        <fieldset>
+                            <legend>Project Information</legend>
+                            
+                            <div class="form-group">
+                                <label for="service_type">Service Type *</label>
+                                <select id="service_type" name="service_type" required>
+                                    <option value="">Select Service Type</option>
+                                    <option value="residential">Residential Remodeling</option>
+                                    <option value="commercial">Commercial Renovation</option>
+                                    <option value="hospitality">Hospitality/Restaurant</option>
+                                    <option value="retail">Retail Space</option>
+                                    <option value="office">Office Build-Out</option>
+                                </select>
+                                <span class="error-message">Please select a service type</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="project_description">Project Description *</label>
+                                <textarea id="project_description" name="project_description" 
+                                    rows="4" required minlength="50"
+                                    placeholder="Please provide details about your project scope, timeline, and any specific requirements (minimum 50 characters)"></textarea>
+                                <span class="error-message">Please provide at least 50 characters describing your project</span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="budget_range">Estimated Budget Range</label>
+                                <select id="budget_range" name="budget_range">
+                                    <option value="">Select Budget Range</option>
+                                    <option value="50-100k">$50,000 - $100,000</option>
+                                    <option value="100-250k">$100,000 - $250,000</option>
+                                    <option value="250-500k">$250,000 - $500,000</option>
+                                    <option value="500k+">$500,000+</option>
+                                    <option value="tbd">To Be Determined</option>
+                                </select>
+                            </div>
+                        </fieldset>
+                        
+                        <div class="captcha-placeholder">
+                            <p>reCAPTCHA Verification Would Appear Here</p>
+                            <small>(This is a test form - no actual verification required)</small>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Submit Request</button>
+                        
+                        <p class="privacy-notice">
+                            By submitting this form, you agree to our Terms of Service and Privacy Policy.
+                            We respect your privacy and will never share your information.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="success-modal" id="successModal">
+        <div class="success-content">
+            <div class="success-icon">✓</div>
+            <h3>Request Received</h3>
+            <p>Thank you for your interest. A member of our team will contact you within one business day to discuss your project.</p>
+            <button class="close-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('enterprise-quote').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Check if form is valid
+            if (!this.checkValidity()) {
+                // Show validation errors
+                this.reportValidity();
+                return;
+            }
+            
+            // Collect form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            console.log('Enterprise form submitted:', data);
+            
+            // Show success modal
+            document.getElementById('successModal').style.display = 'flex';
+            
+            // Reset form
+            this.reset();
+        });
+        
+        function closeModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+        
+        // Format phone number as user types
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 6) {
+                value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6, 10);
+            } else if (value.length >= 3) {
+                value = value.slice(0, 3) + '-' + value.slice(3);
+            }
+            e.target.value = value;
+        });
+    </script>
+</body>
+</html>

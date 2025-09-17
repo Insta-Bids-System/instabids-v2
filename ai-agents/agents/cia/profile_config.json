@@ -1,0 +1,64 @@
+{
+  "landing": {
+    "description": "Anonymous homeowner first conversation - capture project quickly",
+    "endpoints_used": [
+      "POST /api/cia/stream",
+      "POST /api/cia/potential-bid-cards/{id}/convert-to-bid-card"
+    ],
+    "tools": ["update_bid_card"],
+    "memory": {
+      "load_history": false,
+      "load_user_context": false,
+      "save_to_unified": true,
+      "save_to_session": true,
+      "namespaces": ["session"]
+    },
+    "prompt_additions": "You are helping an anonymous user who hasn't created an account yet. Focus on capturing project details quickly and efficiently. Guide them toward creating an account to save their project. Do not reference any previous projects or history. Keep the conversation focused on their immediate need.",
+    "model": "gpt-4o",
+    "temperature": 0.3,
+    "features": {
+      "rfi": false,
+      "iris": false,
+      "multi_project": false,
+      "bid_card_management": false,
+      "account_prompts": true
+    }
+  },
+  "app": {
+    "description": "Logged-in user with full features - complete project assistance",
+    "endpoints_used": [
+      "POST /api/cia/stream",
+      "GET /api/cia/conversation/{session_id}",
+      "GET /api/cia/user/{user_id}/potential-bid-cards",
+      "PUT /api/cia/potential-bid-cards/{id}/field",
+      "DELETE /api/cia/potential-bid-cards/{id}",
+      "POST /api/cia/potential-bid-cards/{id}/convert-to-bid-card",
+      "POST /api/cia/chat/rfi/{rfi_id}",
+      "POST /api/cia/receive-iris-proposal"
+    ],
+    "tools": [
+      "update_bid_card",
+      "manage_bid_cards",
+      "search_projects",
+      "request_photos",
+      "receive_iris_design"
+    ],
+    "memory": {
+      "load_history": true,
+      "load_user_context": true,
+      "save_to_unified": true,
+      "save_to_session": true,
+      "namespaces": ["user", "projects", "conversations", "preferences"]
+    },
+    "prompt_additions": "You have full access to this user's project history and preferences. Reference their previous projects when relevant. You can ask questions like 'Is this for your kitchen renovation project?' or 'Would you like to add this to your existing lawn maintenance project?' You can manage their bid cards, request photos through RFI, and integrate with IRIS for design assistance.",
+    "model": "gpt-4o",
+    "temperature": 0.3,
+    "features": {
+      "rfi": true,
+      "iris": true,
+      "multi_project": true,
+      "bid_card_management": true,
+      "account_prompts": false
+    }
+  }
+}

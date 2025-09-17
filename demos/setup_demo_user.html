@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup Demo User</title>
+</head>
+<body>
+    <h1>Setup Demo User for Inspiration Boards</h1>
+    <button onclick="setupDemoUser()">Setup Demo User</button>
+    <button onclick="clearDemoUser()">Clear Demo User</button>
+    <div id="status"></div>
+
+    <script>
+        function setupDemoUser() {
+            const demoUser = {
+                id: '550e8400-e29b-41d4-a716-446655440001',
+                email: 'demo@instabids.com',
+                full_name: 'Demo User',
+                role: 'homeowner'
+            };
+            
+            localStorage.setItem('DEMO_USER', JSON.stringify(demoUser));
+            localStorage.setItem('DEMO_MODE', 'true');
+            
+            document.getElementById('status').innerHTML = '<p style="color: green;">✅ Demo user set up! You can now use the inspiration boards.</p>';
+        }
+        
+        function clearDemoUser() {
+            localStorage.removeItem('DEMO_USER');
+            localStorage.removeItem('DEMO_MODE');
+            
+            document.getElementById('status').innerHTML = '<p style="color: blue;">Demo user cleared.</p>';
+        }
+    </script>
+</body>
+</html>

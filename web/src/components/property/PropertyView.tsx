@@ -1,0 +1,681 @@
+import type React from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import type { Property, PropertyRoom, PropertyAsset } from "./PropertyDashboard";
+import { useAuth } from "@/contexts/AuthContext";
+import PhotoUpload from "./PhotoUpload";
+import FloatingIrisChat from "../unified/FloatingIrisChat";
+import { useIris } from "@/contexts/IrisContext";
+import UnifiedRepairsProjects from "./UnifiedRepairsProjects";
+
+interface PropertyViewProps {
+  property: Property;
+  onBack: () => void;
+  onUpdate: () => void;
+}
+
+interface MaintenanceIssue {
+  id: string;
+  photo_id: string;
+  photo_url: string;
+  photo_filename: string;
+  description: string;
+  severity: "low" | "medium" | "high" | "urgent";
+  type: "maintenance" | "repair" | "safety" | "cosmetic";
+  confidence?: number;
+  estimated_cost?: "low" | "medium" | "high";
+  detected_at: string;
+}
+
+const PropertyView: React.FC<PropertyViewProps> = ({ property, onBack, onUpdate }) => {
+  const { user } = useAuth();
+  const { setPropertyContext, clearContext } = useIris();
+  const [rooms, setRooms] = useState<PropertyRoom[]>([]);
+  const [assets, setAssets] = useState<PropertyAsset[]>([]);
+  const [maintenanceIssues, setMaintenanceIssues] = useState<MaintenanceIssue[]>([]);
+  const [photos, setPhotos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"overview" | "rooms" | "assets" | "photos" | "repairs_projects">("overview");
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
+  // Move repairs tab state to component level to fix React hooks error
+  const [selectedRepairs, setSelectedRepairs] = useState<string[]>([]);
+  const [isCreatingBidCard, setIsCreatingBidCard] = useState(false);
+
+  const loadPropertyData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      if (!user?.id) {
+        console.error("[PropertyView] No user ID available");
+        return;
+      }
+      
+      const homeownerId = user.id;
+      
+      // Load rooms
+      const roomsResponse = await fetch(
+        `/api/properties/${property.id}/rooms?user_id=${homeownerId}`
+      );
+      if (roomsResponse.ok) {
+        const roomsData = await roomsResponse.json();
+        setRooms(roomsData || []);
+      }
+
+      // Load assets  
+      const assetsResponse = await fetch(
+        `/api/properties/${property.id}/assets?user_id=${homeownerId}`
+      );
+      if (assetsResponse.ok) {
+        const assetsData = await assetsResponse.json();
+        setAssets(assetsData || []);
+      }
+
+      // Load maintenance issues from photos
+      const photosResponse = await fetch(
+        `/api/properties/${property.id}/maintenance-issues?user_id=${homeownerId}`
+      );
+      if (photosResponse.ok) {
+        const issuesData = await photosResponse.json();
+        setMaintenanceIssues(issuesData || []);
+      }
+
+      // Load photos
+      const photosListResponse = await fetch(
+        `/api/properties/${property.id}/photos?user_id=${homeownerId}`
+      );
+      if (photosListResponse.ok) {
+        const photosData = await photosListResponse.json();
+        setPhotos(photosData || []);
+        console.log(`Loaded ${photosData?.length || 0} photos from API`);
+      } else {
+        console.error(`Failed to load photos: ${photosListResponse.status}`);
+      }
+    } catch (error) {
+      console.error("Error loading property data:", error);
+      toast.error("Failed to load property details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPropertyData();
+    // Set property context for IRIS when viewing this property
+    setPropertyContext(property.id);
+    
+    // Clear context when unmounting
+    return () => {
+      clearContext();
+    };
+  }, [property.id, user]);
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* Property Details Card */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Property Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <div>
+              <span className="text-sm text-gray-600">Name</span>
+              <p className="text-gray-900 font-medium">{property.name}</p>
+            </div>
+            {property.address && (
+              <div>
+                <span className="text-sm text-gray-600">Address</span>
+                <p className="text-gray-900">{property.address}</p>
+              </div>
+            )}
+            <div>
+              <span className="text-sm text-gray-600">Property Type</span>
+              <p className="text-gray-900 capitalize">{property.property_type.replace('_', ' ')}</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {property.square_feet && (
+              <div>
+                <span className="text-sm text-gray-600">Square Feet</span>
+                <p className="text-gray-900">{property.square_feet.toLocaleString()} sq ft</p>
+              </div>
+            )}
+            {property.year_built && (
+              <div>
+                <span className="text-sm text-gray-600">Year Built</span>
+                <p className="text-gray-900">{property.year_built}</p>
+              </div>
+            )}
+            <div>
+              <span className="text-sm text-gray-600">Created</span>
+              <p className="text-gray-900">{new Date(property.created_at).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="text-3xl font-bold text-blue-600 mb-2">{rooms.length}</div>
+          <div className="text-gray-600">Rooms Documented</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="text-3xl font-bold text-green-600 mb-2">{assets.length}</div>
+          <div className="text-gray-600">Assets Tracked</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <div className="text-3xl font-bold text-purple-600 mb-2">{photos.length}</div>
+          <div className="text-gray-600">Photos Uploaded</div>
+        </div>
+      </div>
+
+      {/* Getting Started / Quick Actions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              {rooms.length === 0 ? "Get Started" : "Quick Actions"}
+            </h3>
+            <p className="text-blue-700 mb-4">
+              {rooms.length === 0 
+                ? "Begin documenting your property by uploading photos for AI analysis."
+                : "Continue building your property documentation."
+              }
+            </p>
+          </div>
+          <button
+            onClick={() => setShowPhotoUpload(!showPhotoUpload)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            📸 Upload Photos
+          </button>
+        </div>
+        
+        {showPhotoUpload && (
+          <div className="mt-6 pt-6 border-t border-blue-200">
+            <PhotoUpload
+              propertyId={property.id}
+              userId={user?.id}
+              context="property"
+              onUploadComplete={(result) => {
+                console.log("Photo upload complete:", result);
+                setShowPhotoUpload(false);
+                loadPropertyData(); // Refresh data to show new photos and assets
+              }}
+              onOpenIrisChat={(photoData) => {
+                console.log("IRIS chat triggered with photo:", photoData);
+                // IRIS is always available via floating chat, no need to open separately
+              }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderRooms = () => (
+    <div className="space-y-4">
+      {rooms.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">🏠</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No rooms documented</h3>
+          <p className="text-gray-600 mb-4">Upload photos to automatically detect and document rooms with AI.</p>
+          <button
+            onClick={() => setShowPhotoUpload(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            📸 Upload First Photo
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map((room) => (
+            <div key={room.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+              {room.cover_photo_url && (
+                <img 
+                  src={room.cover_photo_url} 
+                  alt={room.name}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              <div className="p-4">
+                <h4 className="font-medium text-gray-900 mb-2">{room.name}</h4>
+                <p className="text-sm text-gray-600 mb-3">{room.room_type.replace('_', ' ')}</p>
+                <div className="flex justify-between items-center text-xs text-gray-500">
+                  <span>{room.square_feet ? `${room.square_feet} sq ft` : ''}</span>
+                  <span>{new Date(room.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderRepairs = () => {
+    const handleSelectRepair = (repairId: string) => {
+      setSelectedRepairs(prev => 
+        prev.includes(repairId) 
+          ? prev.filter(id => id !== repairId)
+          : [...prev, repairId]
+      );
+    };
+
+    const handleCreateBidCard = async () => {
+      // If no specific repairs selected, use all repairs
+      const repairsToUse = selectedRepairs.length > 0 ? selectedRepairs : maintenanceIssues.map(i => i.id);
+      
+      if (repairsToUse.length === 0) {
+        alert('No repair items available');
+        return;
+      }
+
+      setIsCreatingBidCard(true);
+      try {
+        const response = await fetch(`/api/properties/${property.id}/create-bid-card-from-repairs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            user_id: user?.id,
+            repair_ids: repairsToUse
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to create bid card');
+        
+        const result = await response.json();
+        alert(`Bid card created successfully! Bid Card Number: ${result.bid_card?.bid_card_number}`);
+        setSelectedRepairs([]);
+      } catch (error) {
+        console.error('Error creating bid card:', error);
+        alert('Failed to create bid card. Please try again.');
+      } finally {
+        setIsCreatingBidCard(false);
+      }
+    };
+
+    return (
+      <div className="space-y-4">
+        {maintenanceIssues.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">🔧</div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No repairs needed</h3>
+            <p className="text-gray-600 mb-4">Upload photos to detect maintenance issues with AI.</p>
+            <button
+              onClick={() => setShowPhotoUpload(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              📸 Upload Photos
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Summary Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-red-600">
+                  {maintenanceIssues.filter(i => i.severity === "urgent").length}
+                </div>
+                <div className="text-sm text-red-700">Urgent</div>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-orange-600">
+                  {maintenanceIssues.filter(i => i.severity === "high").length}
+                </div>
+                <div className="text-sm text-orange-700">High Priority</div>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {maintenanceIssues.filter(i => i.severity === "medium").length}
+                </div>
+                <div className="text-sm text-yellow-700">Medium</div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="text-2xl font-bold text-blue-600">
+                  {maintenanceIssues.filter(i => i.severity === "low").length}
+                </div>
+                <div className="text-sm text-blue-700">Low Priority</div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Create Bid Card Button */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">
+                    Create Bid Card
+                  </h3>
+                  <p className="text-green-700 mb-4">
+                    {selectedRepairs.length > 0 
+                      ? `Get quotes for ${selectedRepairs.length} selected repair${selectedRepairs.length > 1 ? 's' : ''}.`
+                      : 'Get quotes from contractors for all repairs.'
+                    }
+                  </p>
+                  <button
+                    onClick={handleCreateBidCard}
+                    disabled={isCreatingBidCard}
+                    className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-green-400"
+                  >
+                    {isCreatingBidCard ? 'Creating...' : 'Create Bid Card 📋'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Chat with Agent Button */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                    Chat with Agent
+                  </h3>
+                  <p className="text-blue-700 mb-4">
+                    Discuss these repairs with our AI agent to get personalized advice and quotes.
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Create property context for the conversation
+                      const propertyContext = {
+                        property_id: property.id,
+                        property_name: property.name,
+                        property_address: property.address,
+                        maintenance_issues: maintenanceIssues.map(issue => ({
+                          description: issue.description,
+                          severity: issue.severity,
+                          type: issue.type,
+                          photo_url: issue.photo_url
+                        })),
+                        rooms_count: rooms.length,
+                        assets_count: assets.length
+                      };
+                      
+                      // Navigate to CIA chat with property context
+                      const contextParam = encodeURIComponent(JSON.stringify(propertyContext));
+                      window.location.href = `/?property_context=${contextParam}`;
+                    }}
+                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  >
+                    💬 Chat with Agent
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          {/* Issues List */}
+          <div className="space-y-4">
+            {maintenanceIssues.map((issue) => (
+              <div key={issue.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <div className="flex">
+                  {/* Checkbox for Selection */}
+                  <div className="flex items-start p-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedRepairs.includes(issue.id)}
+                      onChange={() => handleSelectRepair(issue.id)}
+                      className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                  </div>
+                  
+                  {/* Photo Thumbnail */}
+                  <div className="w-32 h-32 flex-shrink-0">
+                    <img 
+                      src={issue.photo_url} 
+                      alt={issue.description}
+                      className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => {
+                        // Open photo in modal or new tab
+                        window.open(issue.photo_url, '_blank');
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Issue Details */}
+                  <div className="flex-1 p-4 pl-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-1">{issue.description}</h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          📸 From photo: {issue.photo_filename}
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            issue.severity === 'urgent' ? 'bg-red-100 text-red-800' :
+                            issue.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                            issue.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {issue.severity}
+                          </span>
+                          <span className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600">
+                            {issue.type}
+                          </span>
+                          {issue.estimated_cost && (
+                            <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                              ${issue.estimated_cost} cost
+                            </span>
+                          )}
+                          {issue.confidence && (
+                            <span className="text-xs px-2 py-1 rounded bg-purple-100 text-purple-800">
+                              {Math.round(issue.confidence * 100)}% confident
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {new Date(issue.detected_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+    );
+  };
+
+  const renderAssets = () => (
+    <div className="space-y-4">
+      {assets.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">📦</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No assets tracked</h3>
+          <p className="text-gray-600 mb-4">Upload photos to automatically detect and track assets with AI.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {assets.map((asset) => (
+            <div key={asset.id} className="bg-white rounded-lg shadow-sm border p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {asset.name || `${asset.category} (${asset.asset_type})`}
+                  </h4>
+                  {asset.brand && (
+                    <p className="text-sm text-gray-600">{asset.brand}</p>
+                  )}
+                  {asset.model_number && (
+                    <p className="text-xs text-gray-500">Model: {asset.model_number}</p>
+                  )}
+                </div>
+                <span className={`text-xs px-2 py-1 rounded ${
+                  asset.status === 'active' ? 'bg-green-100 text-green-800' :
+                  asset.status === 'needs_repair' ? 'bg-red-100 text-red-800' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {asset.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={onBack}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{property.name}</h1>
+            {property.address && (
+              <p className="text-gray-600">{property.address}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b">
+        <nav className="flex space-x-8">
+          {[
+            { id: "overview", label: "Overview" },
+            { id: "rooms", label: `Rooms (${rooms.length})` },
+            { id: "assets", label: `Assets (${assets.length})` },
+            { id: "repairs_projects", label: `Repairs/Projects (${maintenanceIssues.length})`, badge: maintenanceIssues.length > 0 },
+            { id: "photos", label: `Photos (${photos.length})` },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors relative ${
+                activeTab === tab.id
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              {tab.label}
+              {tab.badge && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs w-2 h-2 rounded-full"></span>
+              )}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Tab Content */}
+      <div>
+        {activeTab === "overview" && renderOverview()}
+        {activeTab === "rooms" && renderRooms()}
+        {activeTab === "assets" && renderAssets()}
+        {activeTab === "repairs_projects" && (
+          <div className="py-6">
+            <UnifiedRepairsProjects 
+              maintenanceIssues={maintenanceIssues}
+              propertyId={property.id}
+              userId={user?.id}
+              onOpenIrisChat={(context) => {
+                console.log("Opening IRIS chat with context:", context);
+                // IRIS chat will be triggered via FloatingIrisChat component
+              }}
+            />
+          </div>
+        )}
+        {activeTab === "photos" && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold">Property Photos</h3>
+              <button
+                onClick={() => setShowPhotoUpload(!showPhotoUpload)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                📸 Upload Photo
+              </button>
+            </div>
+            
+            {showPhotoUpload && (
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <PhotoUpload
+                  propertyId={property.id}
+                  userId={user?.id}
+                  context="property"
+                  onUploadComplete={(result) => {
+                    console.log("Photo upload complete:", result);
+                    setShowPhotoUpload(false);
+                    loadPropertyData(); // Refresh data to show new photos
+                  }}
+                  onOpenIrisChat={(photoData) => {
+                    console.log("IRIS chat triggered with photo:", photoData);
+                    // IRIS is always available via floating chat, no need to open separately
+                  }}
+                />
+              </div>
+            )}
+            
+            {photos.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-4">📷</div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No photos yet</h3>
+                <p className="text-gray-600">Upload photos to start AI-powered property analysis.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {photos.map((photo) => (
+                  <div key={photo.id} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <img 
+                      src={photo.photo_url} 
+                      alt={photo.ai_description || photo.original_filename}
+                      className="w-full h-48 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => {
+                        // Open photo in modal or new tab
+                        window.open(photo.photo_url, '_blank');
+                      }}
+                    />
+                    <div className="p-4">
+                      <h4 className="font-medium text-gray-900 mb-2">{photo.original_filename}</h4>
+                      {photo.ai_description && (
+                        <p className="text-sm text-gray-600 mb-3">{photo.ai_description}</p>
+                      )}
+                      <div className="flex justify-between items-center text-xs text-gray-500">
+                        <span>{photo.photo_type || 'documentation'}</span>
+                        <span>{new Date(photo.created_at).toLocaleDateString()}</span>
+                      </div>
+                      {photo.room_id && (
+                        <div className="mt-2">
+                          <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
+                            Room: {photo.room_id}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Floating IRIS Chat - automatically available with property context */}
+      <FloatingIrisChat
+        propertyId={property.id}
+        initialContext="property"
+      />
+    </div>
+  );
+};
+
+export default PropertyView;
