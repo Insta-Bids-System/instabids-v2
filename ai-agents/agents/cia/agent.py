@@ -29,15 +29,19 @@ logger = logging.getLogger(__name__)
 
 class CustomerInterfaceAgent:
     """Clean CIA implementation with real-time bid card updates"""
-    
-    def __init__(self, api_key: Optional[str] = None):
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        bid_card_manager: Optional[PotentialBidCardManager] = None,
+    ):
         """Initialize with OpenAI and existing systems"""
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         self.client = AsyncOpenAI(api_key=self.api_key)
-        
+
         # KEEP THESE - They work!
         self.db = db  # Use same database instance as other agents
-        self.bid_cards = PotentialBidCardManager()  # This updates the UI!
+        self.bid_cards = bid_card_manager or PotentialBidCardManager()  # This updates the UI!
         self.store = CIAStore()
         
         # Define BOTH tools - extraction AND categorization
@@ -112,6 +116,8 @@ class CustomerInterfaceAgent:
         Main conversation handler with real-time bid card updates
         THIS IS WHAT CONNECTS TO YOUR UI!
         """
+        bid_card_error: Optional[str] = None
+        bid_card_id: Optional[str] = None
         try:
             logger.info(f"CIA handling conversation with profile: {profile}")
             
@@ -132,7 +138,6 @@ class CustomerInterfaceAgent:
                 conversation_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"cia_{session_id}"))
             
             # 3. Get or create potential bid card (THIS IS CRITICAL FOR UI!)
-            bid_card_id = None
             try:
                 bid_card_id = await self.bid_cards.create_potential_bid_card(
                     conversation_id=conversation_id,
@@ -143,8 +148,10 @@ class CustomerInterfaceAgent:
                     logger.info(f"Created potential bid card: {bid_card_id}")
                 else:
                     logger.error("Failed to create potential bid card!")
+                    bid_card_error = "failed_to_create"
             except Exception as e:
                 logger.error(f"Error creating bid card: {e}")
+                bid_card_error = str(e)
             
             # 4. HISTORY LOADING FOR BOTH PROFILES
             previous_messages = []
@@ -404,6 +411,8 @@ class CustomerInterfaceAgent:
                 "session_id": session_id,
                 "conversation_id": conversation_id,
                 "bid_card_id": bid_card_id,  # UI needs this!
+                "bid_card_created": bool(bid_card_id),
+                "bid_card_error": bid_card_error,
                 "extracted_data": extracted_data,  # What we just extracted
                 "tool_calls": tool_calls_made,  # All tool calls made (for streaming)
                 "completion_percentage": completion_percentage,  # UI progress bar!
@@ -420,7 +429,10 @@ class CustomerInterfaceAgent:
                 "response": "I'm having trouble processing that. Could you please try again?",
                 "success": False,
                 "error": str(e),
-                "session_id": session_id
+                "session_id": session_id,
+                "bid_card_id": bid_card_id,
+                "bid_card_created": bool(bid_card_id),
+                "bid_card_error": bid_card_error
             }
     
     def _extract_context_from_history(self, previous_messages: List[Dict]) -> Dict[str, Any]:
