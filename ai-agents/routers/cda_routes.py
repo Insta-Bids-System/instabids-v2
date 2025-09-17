@@ -29,7 +29,7 @@ async def discover_contractors(bid_card_id: str, contractors_needed: int = 5):
         raise HTTPException(500, "CDA agent not initialized")
 
     try:
-        result = cda_agent.discover_contractors(bid_card_id, contractors_needed)
+        result = await cda_agent.discover_contractors(bid_card_id, contractors_needed)
 
         if result["success"]:
             return {

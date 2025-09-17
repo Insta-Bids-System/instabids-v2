@@ -16,6 +16,7 @@ from supabase import Client, create_client
 from .campaign_orchestrator import OutreachCampaignOrchestrator
 from .check_in_manager import CampaignCheckInManager
 from .timing_probability_engine import ContractorOutreachCalculator, OutreachStrategy
+from agents.cda.agent import ContractorDiscoveryAgent
 
 
 @dataclass
@@ -58,8 +59,9 @@ class EnhancedCampaignOrchestrator:
         self.timing_calculator = ContractorOutreachCalculator()
         self.base_orchestrator = OutreachCampaignOrchestrator()
         self.check_in_manager = CampaignCheckInManager()
+        self.cda_agent = ContractorDiscoveryAgent()  # Unified CDA with adaptive discovery
 
-        print("[Enhanced Orchestrator] Initialized with timing engine integration")
+        print("[Enhanced Orchestrator] Initialized with timing engine and unified CDA integration")
 
     async def create_intelligent_campaign(self, request: CampaignRequest) -> dict[str, Any]:
         """
@@ -119,12 +121,43 @@ class EnhancedCampaignOrchestrator:
             # Display strategy
             self._display_strategy(strategy)
 
-            # Step 3: Select specific contractors based on strategy
-            selected_contractors = await self._select_contractors_by_strategy(
-                strategy,
-                request.project_type,
-                request.location
+            # Step 3: Use CDA to discover contractors with adaptive radius expansion
+            print(f"[Enhanced Orchestrator] Using unified CDA for contractor discovery...")
+            
+            # Calculate total contractors needed from strategy
+            total_needed = strategy.total_to_contact
+            
+            # Create a temporary bid card if needed for CDA
+            bid_card_id = request.bid_card_id
+            
+            # Use CDA with adaptive discovery
+            cda_result = await self.cda_agent.discover_contractors(
+                bid_card_id=bid_card_id,
+                contractors_needed=total_needed,
+                radius_miles=15  # CDA will auto-expand if needed
             )
+            
+            if not cda_result.get("success"):
+                print(f"[Enhanced Orchestrator] CDA discovery failed: {cda_result.get('error')}")
+                # Fallback to old method
+                selected_contractors = await self._select_contractors_by_strategy(
+                    strategy,
+                    request.project_type,
+                    request.location
+                )
+            else:
+                selected_contractors = cda_result.get("selected_contractors", [])
+                print(f"[Enhanced Orchestrator] CDA discovered {len(selected_contractors)} contractors")
+                
+                # Assign tiers based on match scores
+                for contractor in selected_contractors:
+                    score = contractor.get("match_score", 50)
+                    if score >= 80:
+                        contractor["tier"] = 1
+                    elif score >= 60:
+                        contractor["tier"] = 2
+                    else:
+                        contractor["tier"] = 3
 
             # Step 4: Determine channels if not specified
             if not request.channels:

@@ -23,17 +23,42 @@ else:
 logger = logging.getLogger(__name__)
 
 class SupabaseDB:
-    def __init__(self):
-        """Initialize Supabase client"""
+    def __init__(self, client: Optional[Client] = None):
+        """Initialize Supabase client (gracefully handles missing credentials)."""
+        self.client: Optional[Client] = None
+        self._available = False
+
+        if client is not None:
+            self.client = client
+            self._available = True
+            logger.info("Supabase client injected")
+            return
+
         # Load from environment variables (fixed - no longer need hardcoding)
         supabase_url = os.getenv("SUPABASE_URL")
         supabase_key = os.getenv("SUPABASE_ANON_KEY")
 
         if not supabase_url or not supabase_key:
-            raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables")
+            logger.warning(
+                "Supabase credentials not configured; database features will be disabled."
+            )
+            return
 
-        self.client: Client = create_client(supabase_url, supabase_key)
-        logger.info("Supabase client initialized")
+        try:
+            self.client = create_client(supabase_url, supabase_key)
+            self._available = True
+            logger.info("Supabase client initialized")
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error(f"Failed to initialize Supabase client: {exc!s}")
+            self.client = None
+            self._available = False
+
+    def is_available(self) -> bool:
+        """Return True when a Supabase client is configured."""
+        return self._available and self.client is not None
+
+    def __bool__(self) -> bool:  # pragma: no cover - trivial
+        return self.is_available()
 
     async def save_conversation_state(
         self,
@@ -54,6 +79,17 @@ class SupabaseDB:
         Returns:
             Saved conversation record
         """
+        if not self.is_available():
+            logger.warning(
+                "Supabase unavailable; returning in-memory conversation state for thread %s",
+                thread_id,
+            )
+            return {
+                "conversation_id": None,
+                "thread_id": thread_id,
+                "state": state,
+            }
+
         try:
             # Check if unified conversation already exists by session_id
             existing = self.client.table("unified_conversations").select("*").eq(
@@ -152,6 +188,13 @@ class SupabaseDB:
         Returns:
             Conversation state or None if not found
         """
+        if not self.is_available():
+            logger.warning(
+                "Supabase unavailable; cannot load conversation state for thread %s",
+                thread_id,
+            )
+            return None
+
         try:
             # Try to find conversation by session_id in metadata
             result = self.client.table("unified_conversations").select(
@@ -235,6 +278,13 @@ class SupabaseDB:
         """
         test_email = "test@instabids.com"
 
+        if not self.is_available():
+            fallback_id = str(uuid.uuid4())
+            logger.warning(
+                "Supabase unavailable; returning fallback test user ID %s", fallback_id
+            )
+            return fallback_id
+
         try:
             # Check if test user exists
             result = self.client.table("profiles").select("*").eq(
@@ -289,6 +339,10 @@ class SupabaseDB:
         Returns:
             True if successful, False otherwise
         """
+        if not self.is_available():
+            logger.warning("Supabase unavailable; skipping conversation persistence")
+            return False
+
         try:
             # Create conversation record for BSA
             record = {
@@ -373,6 +427,10 @@ class SupabaseDB:
         Returns:
             Contractor data or None if not found
         """
+        if not self.is_available():
+            logger.warning("Supabase unavailable; cannot load contractor %s", contractor_id)
+            return None
+
         try:
             # Try contractors table first
             result = self.client.table("contractors").select("*").eq("id", contractor_id).execute()
@@ -402,6 +460,10 @@ class SupabaseDB:
         Returns:
             Contractor lead data or None if not found
         """
+        if not self.is_available():
+            logger.warning("Supabase unavailable; cannot load contractor lead %s", contractor_id)
+            return None
+
         try:
             result = self.client.table("contractor_leads").select("*").eq("id", contractor_id).execute()
             

@@ -140,6 +140,7 @@ try:
     
     # Initialize CIA agent - OpenAI GPT-5 only
     from agents.cia.agent import CustomerInterfaceAgent
+    from agents.cia.potential_bid_card_integration import PotentialBidCardManager
     from routers.cia_routes_unified import set_cia_agent  # Fixed streaming endpoint enabled
     
     # Initialize JAA agent
@@ -155,7 +156,8 @@ try:
     
     if openai_api_key:
         # Use OpenAI GPT-5 exclusively
-        cia_agent = CustomerInterfaceAgent(openai_api_key)
+        potential_bid_card_manager = PotentialBidCardManager()
+        cia_agent = CustomerInterfaceAgent(openai_api_key, bid_card_manager=potential_bid_card_manager)
         set_cia_agent(cia_agent)  # Fixed streaming endpoint enabled
         logger.info("CIA agent initialized successfully with OpenAI GPT-5 API key")
     else:
@@ -422,6 +424,54 @@ async def admin_login(request: Request):
         logger.error(f"Error in admin login: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
+# System health endpoint
+@app.get("/api/system/health")
+async def system_health():
+    """Comprehensive system health check"""
+    import psutil
+    from datetime import datetime
+    
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "services": {
+            "backend": "running",
+            "database": "unknown",
+            "redis": "unknown"
+        },
+        "system": {
+            "cpu_percent": psutil.cpu_percent(interval=1),
+            "memory_percent": psutil.virtual_memory().percent,
+            "disk_usage": psutil.disk_usage('/').percent
+        },
+        "version": "1.0.0"
+    }
+    
+    # Check database
+    try:
+        from supabase import create_client
+        supabase_url = os.getenv("SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_ANON_KEY")
+        if supabase_url and supabase_key:
+            client = create_client(supabase_url, supabase_key)
+            # Simple query to test connection
+            result = client.table("profiles").select("id").limit(1).execute()
+            health_status["services"]["database"] = "connected"
+    except:
+        health_status["services"]["database"] = "disconnected"
+        health_status["status"] = "degraded"
+    
+    # Check Redis
+    try:
+        import redis
+        r = redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379"))
+        r.ping()
+        health_status["services"]["redis"] = "connected"
+    except:
+        health_status["services"]["redis"] = "disconnected"
+    
+    return health_status
+
 # Tracking endpoints for external landing page
 @app.post("/api/track/bid-card-click")
 async def track_bid_card_click(request: Request):
@@ -444,6 +494,19 @@ async def track_bid_card_conversion(request: Request):
     except Exception as e:
         logger.error(f"Error tracking bid card conversion: {str(e)}")
         return {"success": False, "error": str(e)}
+
+@app.get("/api/docker-test")
+async def docker_test():
+    """TEST ENDPOINT - Proves Docker uses local files instantly"""
+    import os
+    return {
+        "message": "UPDATED at 6:06 AM - Docker sees this INSTANTLY!",
+        "running_in": "Docker container on port 8008",
+        "file_location": "C:\\Users\\Not John Or Justin\\Documents\\instabids\\ai-agents\\main.py",
+        "instant_update": "YES - Docker sees this immediately without restart!",
+        "openai_key_ends_with": os.getenv("OPENAI_API_KEY", "")[-4:] if os.getenv("OPENAI_API_KEY") else "NOT SET",
+        "timestamp": datetime.now().isoformat()
+    }
 
 if __name__ == "__main__":
     import uvicorn
