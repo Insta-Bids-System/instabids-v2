@@ -10,6 +10,10 @@ import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
+# CRITICAL: Load environment variables BEFORE class definition
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 logger = logging.getLogger(__name__)
 
 
