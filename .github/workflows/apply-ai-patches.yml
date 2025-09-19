@@ -1,0 +1,177 @@
+name: Apply AI Patches
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  apply-patches:
+    if: >
+      github.event.issue.pull_request != null &&
+      (contains(github.event.comment.body, 'resolved:') || contains(github.event.comment.body, '/apply-patches-now'))
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout PR
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+        
+    - name: Get PR details
+      id: pr
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          return {
+            head_ref: pr.head.ref,
+            base_ref: pr.base.ref,
+            head_sha: pr.head.sha
+          };
+    
+    - name: Checkout PR branch
+      run: |
+        git checkout ${{ fromJson(steps.pr.outputs.result).head_ref }}
+        
+    - name: Collect all resolved blocks
+      id: collect-patches
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number
+          });
+          
+          const resolvedBlocks = [];
+          const resolvedFiles = new Set();
+          
+          for (const comment of comments) {
+            const body = comment.body;
+            const resolvedMatches = body.match(/```resolved:([^`]+)```/gs);
+            
+            if (resolvedMatches) {
+              for (const match of resolvedMatches) {
+                const lines = match.split('\n');
+                const firstLine = lines[0];
+                const filePathMatch = firstLine.match(/```resolved:(.+)/);
+                
+                if (filePathMatch) {
+                  const filePath = filePathMatch[1].trim();
+                  const content = lines.slice(1, -1).join('\n');
+                  
+                  if (!resolvedFiles.has(filePath)) {
+                    resolvedBlocks.push({ filePath, content });
+                    resolvedFiles.add(filePath);
+                  }
+                }
+              }
+            }
+          }
+          
+          console.log(`Found ${resolvedBlocks.length} resolved files:`, Array.from(resolvedFiles));
+          return resolvedBlocks;
+    
+    - name: Apply patches
+      run: |
+        PATCHES='${{ steps.collect-patches.outputs.result }}'
+        echo "Applying patches..."
+        
+        if [ "$PATCHES" = "[]" ] || [ "$PATCHES" = "" ]; then
+          echo "❌ No resolved blocks found in comments"
+          exit 1
+        fi
+        
+        echo "$PATCHES" | jq -c '.[]' | while read patch; do
+          FILE_PATH=$(echo "$patch" | jq -r '.filePath')
+          CONTENT=$(echo "$patch" | jq -r '.content')
+          
+          echo "📝 Applying patch to: $FILE_PATH"
+          
+          # Create directory if it doesn't exist
+          mkdir -p "$(dirname "$FILE_PATH")"
+          
+          # Write the resolved content
+          echo "$CONTENT" > "$FILE_PATH"
+          
+          # Stage the file
+          git add "$FILE_PATH"
+        done
+        
+    - name: Check if all conflicts resolved
+      id: check-conflicts
+      run: |
+        # Check for any remaining merge conflict markers
+        if grep -r "<<<<<<< HEAD\|=======" --include="*.py" --include="*.js" --include="*.ts" --include="*.tsx" --include="*.jsx" .; then
+          echo "❌ Merge conflict markers still found"
+          echo "conflicts_remain=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ No merge conflict markers found"
+          echo "conflicts_remain=false" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Commit changes
+      if: steps.check-conflicts.outputs.conflicts_remain == 'false'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🤖 Apply AI-resolved conflicts
+          
+          Applied resolved conflicts from AI agent.
+          All merge conflicts have been resolved.
+          
+          Co-authored-by: GitHub Actions <action@github.com>"
+          git push
+        fi
+        
+    - name: Comment on partial resolution
+      if: steps.check-conflicts.outputs.conflicts_remain == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const appliedCount = ${{ steps.collect-patches.outputs.result }}.length;
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `⚠️ **Partial Resolution Applied**
+            
+            Applied ${appliedCount} resolved files, but merge conflicts still remain.
+            
+            **Next Steps:**
+            1. Review remaining conflicted files
+            2. Provide complete \`resolved:\` blocks for ALL remaining conflicts
+            3. Ensure no merge conflict markers (<<<<<<, ======, >>>>>>) remain
+            
+            The AI agent needs to resolve **ALL** conflicted files before the PR can be merged automatically.`
+          });
+          
+    - name: Comment on success
+      if: steps.check-conflicts.outputs.conflicts_remain == 'false'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const appliedCount = ${{ steps.collect-patches.outputs.result }}.length;
+          
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `✅ **All Conflicts Resolved Successfully!**
+            
+            Applied ${appliedCount} resolved files and all merge conflicts have been cleared.
+            
+            **Status:** Ready for automatic merge
+            **Next:** The PR will be merged automatically by the auto-merge workflow.`
+          });

@@ -1,0 +1,155 @@
+name: Validate AI Patches
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  validate-completeness:
+    if: >
+      github.event.issue.pull_request != null &&
+      contains(github.event.comment.body, 'resolved:') &&
+      github.event.comment.user.login == 'chatgpt-codex-connector[bot]'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout PR
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+        
+    - name: Get PR details
+      id: pr
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number
+          });
+          return {
+            head_ref: pr.head.ref,
+            base_ref: pr.base.ref,
+            head_sha: pr.head.sha
+          };
+    
+    - name: Checkout PR branch
+      run: |
+        git checkout ${{ fromJson(steps.pr.outputs.result).head_ref }}
+        
+    - name: Attempt merge to identify conflicts
+      id: identify-conflicts
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Attempt merge to see which files have conflicts
+        if git merge origin/${{ fromJson(steps.pr.outputs.result).base_ref }} --no-commit --no-ff; then
+          echo "No conflicts found"
+          echo "conflicted_files=" >> $GITHUB_OUTPUT
+        else
+          # Get list of conflicted files
+          CONFLICTED_FILES=$(git diff --name-only --diff-filter=U)
+          echo "Conflicted files:"
+          echo "$CONFLICTED_FILES"
+          echo "conflicted_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONFLICTED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Reset merge state
+          git merge --abort
+        fi
+        
+    - name: Parse resolved blocks from comment
+      id: parse-resolved
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const body = context.payload.comment.body;
+          const resolvedMatches = body.match(/```resolved:([^`]+)```/gs);
+          
+          const resolvedFiles = [];
+          
+          if (resolvedMatches) {
+            for (const match of resolvedMatches) {
+              const lines = match.split('\n');
+              const firstLine = lines[0];
+              const filePathMatch = firstLine.match(/```resolved:(.+)/);
+              
+              if (filePathMatch) {
+                const filePath = filePathMatch[1].trim();
+                resolvedFiles.push(filePath);
+              }
+            }
+          }
+          
+          console.log('Resolved files found:', resolvedFiles);
+          return resolvedFiles;
+          
+    - name: Validate completeness
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const conflictedFiles = `${{ steps.identify-conflicts.outputs.conflicted_files }}`.split('\n').filter(f => f.trim());
+          const resolvedFiles = ${{ steps.parse-resolved.outputs.result }};
+          
+          console.log('Conflicted files:', conflictedFiles);
+          console.log('Resolved files:', resolvedFiles);
+          
+          if (conflictedFiles.length === 0) {
+            console.log('No conflicts detected - validation not needed');
+            return;
+          }
+          
+          const missingFiles = conflictedFiles.filter(file => 
+            !resolvedFiles.some(resolved => resolved.includes(file.trim()))
+          );
+          
+          const extraFiles = resolvedFiles.filter(resolved =>
+            !conflictedFiles.some(conflict => resolved.includes(conflict.trim()))
+          );
+          
+          if (missingFiles.length > 0) {
+            const commentBody = `❌ **Incomplete Conflict Resolution Detected**
+            
+**Missing Resolutions:**
+${missingFiles.map(file => `- \`${file}\``).join('\n')}
+
+**Instructions for AI Agent:**
+You provided \`resolved:\` blocks for ${resolvedFiles.length} files, but there are ${conflictedFiles.length} total conflicted files.
+
+**📋 REQUIREMENTS:**
+1. **You MUST provide a \`\`\`resolved:\` block for EVERY conflicted file**
+2. **Each \`resolved:\` block must contain the COMPLETE file content**
+3. **Do NOT leave any file unresolved** 
+4. **Do NOT stop until ALL conflicts are addressed**
+
+**All Conflicted Files:**
+${conflictedFiles.map(file => `- \`${file}\` ${missingFiles.includes(file) ? '❌ **MISSING**' : '✅ Provided'}`).join('\n')}
+
+Please provide the missing \`resolved:\` blocks now.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+          } else {
+            const commentBody = `✅ **Complete Conflict Resolution Detected**
+            
+All ${conflictedFiles.length} conflicted files have been resolved:
+${resolvedFiles.map(file => `- \`${file}\` ✅`).join('\n')}
+
+🚀 **Ready for automatic application!**
+The patches will be applied automatically by the apply-ai-patches workflow.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+          }
