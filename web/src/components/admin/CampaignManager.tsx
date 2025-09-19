@@ -48,6 +48,32 @@ interface CampaignContractor {
   status: "pending" | "contacted" | "responded" | "bid_submitted";
   contacted_at?: string;
   responded_at?: string;
+  // Unified data from all 3 tables
+  assignment_id?: string;
+  assigned_at?: string;
+  responded_at?: string;
+  source: string;
+  contact_name?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  rating?: number;
+  verified?: boolean;
+  years_in_business?: number;
+  license_number?: string;
+  insurance_verified?: boolean;
+  employees?: number;
+  review_count?: number;
+  discovery_source?: string;
+  license_verified?: boolean;
+  // TAVILY ENRICHED DATA
+  has_website?: boolean;
+  ai_business_summary?: string;
+  ai_capability_description?: string;
+  contractor_size_category?: string;
+  services_mentioned?: string[];
+  company_description?: string;
+  is_tavily_enriched?: boolean;
 }
 
 const CampaignManager: React.FC = () => {
@@ -55,9 +81,16 @@ const CampaignManager: React.FC = () => {
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(false);
+  
+  // CDA Testing state
+  const [showCDATest, setShowCDATest] = useState(false);
+  const [cdaLoading, setCdaLoading] = useState(false);
+  const [cdaResults, setCdaResults] = useState<any>(null);
+  const [tavilyContractors, setTavilyContractors] = useState<any[]>([]);
 
   useEffect(() => {
     fetchCampaigns();
+    fetchTavilyContractors();
     // Polling disabled for performance - use manual refresh instead
     // const interval = setInterval(fetchCampaigns, 30000);
     // return () => clearInterval(interval);
@@ -65,7 +98,7 @@ const CampaignManager: React.FC = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const response = await fetch("/api/admin/campaigns");
+      const response = await fetch("/api/admin/campaigns-unified");
       if (response.ok) {
         const data = await response.json();
         setCampaigns(data.campaigns || []);
@@ -80,7 +113,7 @@ const CampaignManager: React.FC = () => {
   const fetchCampaignDetails = async (campaignId: string) => {
     try {
       const response = await fetch(
-        `/api/admin/campaigns/${campaignId}/details`
+        `/api/admin/campaigns-unified/${campaignId}/details`
       );
       if (response.ok) {
         const data = await response.json();
@@ -141,6 +174,53 @@ const CampaignManager: React.FC = () => {
     }
   };
 
+  const fetchTavilyContractors = async () => {
+    try {
+      const response = await fetch("/api/admin/potential-contractors-tavily");
+      if (response.ok) {
+        const data = await response.json();
+        setTavilyContractors(data.contractors || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch Tavily contractors:", error);
+    }
+  };
+
+  const testCDADiscovery = async () => {
+    setCdaLoading(true);
+    setCdaResults(null);
+    
+    try {
+      const response = await fetch("/api/admin/test-cda-discovery", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          project_type: "kitchen remodel",
+          location_city: "Fort Lauderdale",
+          location_state: "FL",
+          contractors_needed: 5
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCdaResults(data);
+        // Refresh Tavily contractors list
+        fetchTavilyContractors();
+      } else {
+        const error = await response.json();
+        setCdaResults({ success: false, error: error.detail || "Test failed" });
+      }
+    } catch (error) {
+      console.error("CDA test failed:", error);
+      setCdaResults({ success: false, error: String(error) });
+    } finally {
+      setCdaLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -153,13 +233,143 @@ const CampaignManager: React.FC = () => {
     <div className="bg-white rounded-lg shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Campaign Manager</h2>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <button
+            onClick={() => setShowCDATest(!showCDATest)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {showCDATest ? "Hide" : "Test"} CDA Discovery
+          </button>
           <span className="text-sm text-gray-500">
             Active: {campaigns.filter((c) => c.campaign_status === "active").length}
           </span>
           <span className="text-sm text-gray-500">Total: {campaigns.length}</span>
         </div>
       </div>
+
+      {/* CDA Testing Interface */}
+      {showCDATest && (
+        <div className="mb-8 p-6 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-blue-900">CDA Discovery Testing</h3>
+            <div className="flex gap-2">
+              <span className="text-sm text-blue-700">
+                Tavily Enriched: {tavilyContractors.length}
+              </span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Test Controls */}
+            <div>
+              <button
+                onClick={testCDADiscovery}
+                disabled={cdaLoading}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+              >
+                {cdaLoading ? "Running CDA Discovery..." : "Test CDA Discovery"}
+              </button>
+              
+              <p className="text-sm text-blue-700 mb-2">
+                This will test the CDA agent with Tavily enrichment for "kitchen remodel" in Fort Lauderdale, FL
+              </p>
+              
+              {/* Existing Tavily Contractors */}
+              <div className="bg-white rounded p-4">
+                <h4 className="font-medium text-gray-900 mb-2">Existing Tavily-Enriched Contractors</h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {tavilyContractors.slice(0, 5).map((contractor) => (
+                    <div key={contractor.id} className="text-sm border-l-3 border-green-400 pl-2">
+                      <p className="font-medium">{contractor.company_name}</p>
+                      <p className="text-gray-600 text-xs">{contractor.ai_business_summary?.substring(0, 100)}...</p>
+                    </div>
+                  ))}
+                  {tavilyContractors.length > 5 && (
+                    <p className="text-xs text-gray-500">...and {tavilyContractors.length - 5} more</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Test Results */}
+            <div>
+              {cdaLoading && (
+                <div className="flex items-center justify-center h-32">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-blue-700">CDA agent working...</span>
+                </div>
+              )}
+              
+              {cdaResults && (
+                <div className="bg-white rounded p-4">
+                  <h4 className="font-medium text-gray-900 mb-3">CDA Test Results</h4>
+                  
+                  {cdaResults.success ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="font-medium">Total Found:</span>
+                          <span className="ml-2">{cdaResults.cda_results?.total_found || 0}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Selected:</span>
+                          <span className="ml-2">{cdaResults.cda_results?.selected_count || 0}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Tavily Enriched:</span>
+                          <span className="ml-2 text-green-600 font-medium">
+                            {cdaResults.cda_results?.tavily_enriched_count || 0}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium">Tier 3 (Web):</span>
+                          <span className="ml-2">{cdaResults.cda_results?.tier_results?.tier3_web || 0}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                        {cdaResults.cda_results?.explanation}
+                      </div>
+                      
+                      {/* Show discovered contractors with Tavily data */}
+                      {cdaResults.discovered_contractors && cdaResults.discovered_contractors.length > 0 && (
+                        <div>
+                          <h5 className="font-medium text-sm mb-2">Discovered Contractors:</h5>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {cdaResults.discovered_contractors.map((contractor: any) => (
+                              <div key={contractor.id} className={`text-xs p-2 rounded border ${contractor.is_tavily_enriched ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <p className="font-medium">{contractor.company_name}</p>
+                                    <p className="text-gray-600">Score: {contractor.match_score}</p>
+                                    {contractor.is_tavily_enriched && contractor.ai_business_summary && (
+                                      <p className="text-green-700 mt-1">{contractor.ai_business_summary.substring(0, 80)}...</p>
+                                    )}
+                                  </div>
+                                  {contractor.is_tavily_enriched && (
+                                    <span className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded font-medium">
+                                      AI Enhanced
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-red-600 text-sm">
+                      <p className="font-medium">Test Failed:</p>
+                      <p>{cdaResults.error}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Campaign List */}
       <div className="space-y-4">
@@ -312,38 +522,115 @@ const CampaignManager: React.FC = () => {
             {/* Contractors in Campaign */}
             <div>
               <h4 className="font-semibold mb-3">Contractors in Campaign</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {selectedCampaign.contractors?.map((contractor) => (
-                  <div key={contractor.id} className="border rounded p-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{contractor.company_name}</p>
-                        <p className="text-xs text-gray-500">
-                          Tier {contractor.tier} | {contractor.contractor_size || "Unknown size"}
-                        </p>
-                        {contractor.specialties && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {contractor.specialties.slice(0, 3).map((spec, idx) => (
-                              <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                  <div key={contractor.assignment_id || contractor.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-gray-900">{contractor.company_name}</p>
+                          {contractor.is_tavily_enriched && (
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                              AI Enhanced
+                            </span>
+                          )}
+                          {contractor.verified && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1 text-sm text-gray-600">
+                          <p>
+                            <span className="font-medium">Tier {contractor.tier}</span> | 
+                            <span className="ml-1 capitalize">{contractor.source.replace(/_/g, ' ')}</span>
+                          </p>
+                          
+                          {contractor.contact_name && (
+                            <p>Contact: {contractor.contact_name}</p>
+                          )}
+                          
+                          {contractor.rating && (
+                            <p>Rating: {contractor.rating}/5 ({contractor.review_count || 0} reviews)</p>
+                          )}
+                          
+                          {contractor.years_in_business && (
+                            <p>{contractor.years_in_business} years in business</p>
+                          )}
+                          
+                          {contractor.phone && (
+                            <p>Phone: {contractor.phone}</p>
+                          )}
+                          
+                          {contractor.website && (
+                            <p>
+                              <a href={contractor.website} target="_blank" rel="noopener noreferrer" 
+                                 className="text-blue-600 hover:text-blue-800 underline">
+                                Website
+                              </a>
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Specialties */}
+                        {contractor.specialties && contractor.specialties.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {contractor.specialties.slice(0, 4).map((spec, idx) => (
+                              <span key={idx} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
                                 {spec}
                               </span>
                             ))}
+                            {contractor.specialties.length > 4 && (
+                              <span className="text-xs text-gray-500">+{contractor.specialties.length - 4} more</span>
+                            )}
                           </div>
                         )}
+                        
+                        {/* Tavily AI Summary */}
+                        {contractor.ai_business_summary && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
+                            <p className="font-medium text-blue-800 mb-1">AI Business Summary:</p>
+                            <p className="text-blue-700">{contractor.ai_business_summary}</p>
+                          </div>
+                        )}
+                        
+                        {/* Verification badges */}
+                        <div className="flex gap-2 mt-2">
+                          {contractor.license_verified && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
+                              License Verified
+                            </span>
+                          )}
+                          {contractor.insurance_verified && (
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
+                              Insured
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          contractor.status === "bid_submitted"
-                            ? "bg-green-100 text-green-700"
-                            : contractor.status === "responded"
-                              ? "bg-blue-100 text-blue-700"
-                              : contractor.status === "contacted"
-                                ? "bg-gray-100 text-gray-700"
-                                : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {contractor.status.replace(/_/g, " ")}
-                      </span>
+                      
+                      <div className="flex flex-col items-end gap-1">
+                        <span
+                          className={`text-xs px-2 py-1 rounded font-medium ${
+                            contractor.status === "bid_submitted"
+                              ? "bg-green-100 text-green-700"
+                              : contractor.status === "responded"
+                                ? "bg-blue-100 text-blue-700"
+                                : contractor.status === "contacted"
+                                  ? "bg-gray-100 text-gray-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                          }`}
+                        >
+                          {contractor.status.replace(/_/g, " ")}
+                        </span>
+                        
+                        {contractor.assigned_at && (
+                          <p className="text-xs text-gray-500">
+                            Assigned: {new Date(contractor.assigned_at).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

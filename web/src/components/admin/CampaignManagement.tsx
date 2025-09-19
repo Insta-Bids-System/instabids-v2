@@ -154,7 +154,7 @@ const CampaignManagement: React.FC = () => {
       
       // Fetch real campaign data from API
       const [campaignsResponse, statsResponse] = await Promise.all([
-        fetch(`/api/campaign-management/campaigns?status=${selectedStatus || ''}`),
+        fetch(`/api/admin/campaigns-unified?status=${selectedStatus || ''}`),
         fetch('/api/campaign-management/dashboard-stats')
       ]);
 
@@ -167,29 +167,30 @@ const CampaignManagement: React.FC = () => {
 
       // Transform API response to match component interface
       const transformedCampaigns: Campaign[] = campaignsData.campaigns.map((campaign: any) => ({
-        id: campaign.id,
-        name: campaign.name,
+        id: campaign.campaign_id,
+        name: campaign.bid_card_number,
         bid_card_id: campaign.bid_card_id,
         bid_card_number: campaign.bid_card_number,
         project_type: campaign.project_type,
-        status: campaign.status,
+        status: campaign.campaign_status,
         max_contractors: campaign.max_contractors,
         contractors_targeted: campaign.contractors_targeted,
-        contractors_responded: campaign.contractors_responded,
-        bids_received: campaign.bids_received,
+        contractors_responded: campaign.responses_received,
+        bids_received: campaign.responses_received,
         created_at: campaign.created_at,
-        updated_at: campaign.updated_at,
-        target_completion_date: campaign.target_completion_date,
-        progress_percentage: campaign.progress_percentage
+        updated_at: campaign.created_at,
+        target_completion_date: null,
+        progress_percentage: Math.round((campaign.responses_received / campaign.contractors_targeted) * 100) || 0
       }));
 
       const transformedStats: CampaignStats = {
-        total_campaigns: statsData.total_campaigns,
-        active_campaigns: statsData.active_campaigns,
-        completed_campaigns: statsData.completed_campaigns,
-        total_contractors_targeted: statsData.total_contractors_targeted,
-        total_responses_received: statsData.total_responses_received,
-        average_response_rate: statsData.average_response_rate
+        total_campaigns: campaignsData.total || 0,
+        active_campaigns: campaignsData.active_count || 0,
+        completed_campaigns: campaignsData.total - campaignsData.active_count || 0,
+        total_contractors_targeted: campaignsData.total_contractors || 0,
+        total_responses_received: campaignsData.campaigns.reduce((sum: number, c: any) => sum + (c.responses_received || 0), 0),
+        average_response_rate: campaignsData.campaigns.length > 0 ? 
+          campaignsData.campaigns.reduce((sum: number, c: any) => sum + ((c.responses_received || 0) / (c.contractors_targeted || 1)), 0) / campaignsData.campaigns.length * 100 : 0
       };
 
       setCampaigns(transformedCampaigns);
@@ -206,14 +207,21 @@ const CampaignManagement: React.FC = () => {
   const fetchCampaignDetail = async (campaignId: string) => {
     try {
       setDetailLoading(true);
-      const response = await fetch(`/api/campaign-management/campaigns/${campaignId}`);
+      const response = await fetch(`/api/admin/campaigns-unified/${campaignId}/details`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch campaign details: ${response.status}`);
       }
       
       const data = await response.json();
-      setSelectedCampaign(data);
+      // Map the unified API response to the expected format
+      const mappedData = {
+        ...data.campaign,
+        assigned_contractors: data.contractors || [],
+        check_ins: data.check_ins || [],
+        outreach_history: data.outreach_summary || {}
+      };
+      setSelectedCampaign(mappedData);
       setShowDetailView(true);
     } catch (error) {
       console.error('Error fetching campaign details:', error);
@@ -545,13 +553,18 @@ const CampaignManagement: React.FC = () => {
                         }}
                         className="text-left hover:text-blue-600 transition-colors"
                       >
-                        <div className="font-medium text-gray-900 hover:underline">{contractor.company_name}</div>
-                        <div className="text-sm text-gray-500">{contractor.city}, {contractor.state}</div>
+                        <div className="font-medium text-gray-900 hover:underline">{contractor.company_name || 'Unknown Company'}</div>
+                        <div className="text-sm text-gray-500">
+                          {contractor.specialties && contractor.specialties.length > 0 ? 
+                            contractor.specialties.slice(0, 2).join(', ') : 
+                            'General Contractor'
+                          }
+                        </div>
                       </button>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900">{contractor.contact_name}</div>
-                      <div className="text-sm text-gray-500">{contractor.email}</div>
+                      <div className="text-sm text-gray-900">{contractor.contact_name || 'No contact name'}</div>
+                      <div className="text-sm text-gray-500">{contractor.phone || contractor.email || 'No contact info'}</div>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-1 text-xs rounded-full ${
