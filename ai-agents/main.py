@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-InstaBids AI Agents Backend
+InstaBids AI Agents Backend - Main Branch Version
 Orchestrates all AI agents and provides unified API endpoints
+Main branch - ready for conflict testing
 """
 
 import asyncio
