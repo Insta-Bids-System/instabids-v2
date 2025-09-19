@@ -56,7 +56,7 @@ class EnhancedWebSearchAgent:
         
         try:
             # Step 1: Google Places Discovery
-            from google_places_optimized import GooglePlacesOptimized
+            from agents.cda.google_places_optimized import GooglePlacesOptimized
             google_tool = GooglePlacesOptimized()
             
             google_discovery = await google_tool.discover_contractors(
@@ -76,10 +76,12 @@ class EnhancedWebSearchAgent:
                     "contractors": []
                 }
             
-            # Step 2: Build 66-field profiles
+            # Step 2: Build 66-field profiles with rate limiting
             profiles = []
-            for google_contractor in google_discovery.get("contractors", []):
+            for i, google_contractor in enumerate(google_discovery.get("contractors", [])):
                 try:
+                    logger.info(f"[Profile Builder] Processing contractor {i+1}/{len(google_discovery.get('contractors', []))}")
+                    
                     # Enrich with Tavily if website available
                     web_data = None
                     website = google_contractor.get("website", "")
@@ -91,6 +93,10 @@ class EnhancedWebSearchAgent:
                             location=f"{location.get('city', '')}, {location.get('state', '')}"
                         )
                         
+                        # Add delay after Tavily API call
+                        logger.info("[Rate Limiting] Waiting 2 seconds after Tavily call...")
+                        await asyncio.sleep(2)
+                        
                         if tavily_result and tavily_result.get("discovered_pages"):
                             web_data = self._process_tavily_content(tavily_result)
                     
@@ -101,6 +107,10 @@ class EnhancedWebSearchAgent:
                         web_data=web_data,
                         license_data=None  # TODO: Add license verification
                     )
+                    
+                    # Add delay after profile building (which calls OpenAI)
+                    logger.info("[Rate Limiting] Waiting 1 second after profile building...")
+                    await asyncio.sleep(1)
                     
                     # Add discovery metadata
                     profile["discovery_source"] = "enhanced_web_search"
@@ -192,7 +202,9 @@ class EnhancedWebSearchAgent:
                 "google_rating": profile.get("google_rating", 0),
                 "google_review_count": profile.get("google_review_count", 0),
                 "specialties": profile.get("specialties", []),
-                "contractor_size": profile.get("contractor_size", ""),
+                "contractor_size_category": profile.get("contractor_size_category", "small"),
+                "ai_business_summary": profile.get("ai_business_summary", ""),
+                "ai_capability_description": profile.get("ai_capability_description", ""),
                 "lead_status": "new",
                 "discovery_source": "enhanced_web_search"
             }

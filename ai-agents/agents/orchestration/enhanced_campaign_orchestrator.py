@@ -17,6 +17,11 @@ from .campaign_orchestrator import OutreachCampaignOrchestrator
 from .check_in_manager import CampaignCheckInManager
 from .timing_probability_engine import ContractorOutreachCalculator, OutreachStrategy
 from agents.cda.agent import ContractorDiscoveryAgent
+# Import contractor conversion utility
+import sys
+import uuid
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from test_contractor_conversion import convert_potential_to_contractor_leads
 
 
 @dataclass
@@ -158,6 +163,42 @@ class EnhancedCampaignOrchestrator:
                         contractor["tier"] = 2
                     else:
                         contractor["tier"] = 3
+                
+                # CRITICAL: Convert potential_contractors to contractor_leads for campaign compatibility
+                print(f"[Enhanced Orchestrator] Converting {len(selected_contractors)} potential contractors to contractor_leads...")
+                
+                # Debug: Check what fields the contractors have
+                if selected_contractors:
+                    print(f"[Enhanced Orchestrator DEBUG] First contractor fields: {list(selected_contractors[0].keys())}")
+                
+                # Handle contractors that may not have 'id' field yet
+                potential_contractor_ids = []
+                for c in selected_contractors:
+                    if "id" in c:
+                        potential_contractor_ids.append(c["id"])
+                    elif "google_place_id" in c:
+                        # Use google_place_id as fallback identifier
+                        potential_contractor_ids.append(c["google_place_id"])
+                    else:
+                        print(f"[Enhanced Orchestrator ERROR] Contractor missing id: {c.get('company_name', 'Unknown')}")
+                        
+                print(f"[Enhanced Orchestrator] Found {len(potential_contractor_ids)} contractor IDs")
+                contractor_lead_ids = convert_potential_to_contractor_leads(potential_contractor_ids)
+                
+                if len(contractor_lead_ids) != len(potential_contractor_ids):
+                    print(f"[Enhanced Orchestrator] Warning: Only {len(contractor_lead_ids)} of {len(potential_contractor_ids)} contractors converted")
+                
+                # Update contractor IDs to use contractor_leads IDs
+                for i, contractor in enumerate(selected_contractors):
+                    if i < len(contractor_lead_ids):
+                        contractor["id"] = contractor_lead_ids[i]
+                        contractor["converted_to_contractor_lead"] = True
+                    else:
+                        contractor["conversion_failed"] = True
+                
+                # Filter out contractors that failed conversion
+                selected_contractors = [c for c in selected_contractors if not c.get("conversion_failed")]
+                print(f"[Enhanced Orchestrator] {len(selected_contractors)} contractors ready for campaign assignment")
 
             # Step 4: Determine channels if not specified
             if not request.channels:

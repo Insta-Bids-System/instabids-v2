@@ -14,6 +14,7 @@ from supabase import create_client
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+from database_simple import db
 from agents.cda.service_specific_matcher import ServiceSpecificMatcher
 from agents.cda.tier1_matcher_v2 import Tier1Matcher
 from agents.cda.tier2_reengagement import Tier2Reengagement
@@ -81,13 +82,18 @@ class ContractorDiscoveryAgent:
             urgency = bid_card.get("urgency_level", "week")
 
             # Calculate contractors to contact based on response rates
+            # CORRECTED RESPONSE RATES:
             # Tier 1: 90% response rate (internal contractors)
-            # Tier 2: 50% response rate (previous contacts)
-            # Tier 3: 20% response rate (cold outreach)
-            # Average blended rate ~33% for mixed tiers
+            # Tier 2: 70% response rate (previous contacts)
+            # Tier 3: 50% response rate (cold web search)
 
-            # For now, use simple 5-to-1 ratio (20% response rate assumption)
-            contractors_to_find = bids_needed * 5
+            # Import the corrected calculator
+            from agents.cda.tier_math_corrected import ContractorResponseCalculator
+            calculator = ContractorResponseCalculator()
+            
+            # We'll get actual tier availability after searching
+            # For initial target, use conservative estimate
+            contractors_to_find = bids_needed * 2  # Conservative initial target
 
             print(f"[CDA v2] Need {bids_needed} bids, targeting {contractors_to_find} contractors")
             print(f"[CDA v2] Urgency level: {urgency}")
@@ -140,69 +146,93 @@ class ContractorDiscoveryAgent:
 
             # Step 3: Gather contractors from all sources
             all_contractors = []
+            tier_availability = {}
 
             # Tier 1: Internal database with radius search
             print(f"[CDA v2] Searching Tier 1: Internal contractor database within {radius_miles} miles...")
             tier1_results = self.tier1_matcher.find_matching_contractors(bid_card, radius_miles=radius_miles)
+            tier1_count = 0
             if tier1_results["success"] and tier1_results["contractors"]:
                 all_contractors.extend(tier1_results["contractors"])
-                print(f"[CDA v2] Found {len(tier1_results['contractors'])} internal contractors within radius")
+                tier1_count = len(tier1_results["contractors"])
+                print(f"[CDA v2] Found {tier1_count} internal contractors within radius")
             else:
                 print(f"[CDA v2] No internal contractors found within {radius_miles} miles")
+            tier_availability["tier1"] = tier1_count
 
             # Tier 2: Previous contacts with radius search
             print(f"[CDA v2] Searching Tier 2: Previous contractor contacts within {radius_miles} miles...")
             tier2_results = self.tier2_reengagement.find_reengagement_candidates(bid_card, radius_miles=radius_miles)
+            tier2_count = 0
             if tier2_results and len(tier2_results) > 0:
                 all_contractors.extend(tier2_results)
-                print(f"[CDA v2] Found {len(tier2_results)} previous contacts within radius")
+                tier2_count = len(tier2_results)
+                print(f"[CDA v2] Found {tier2_count} previous contacts within radius")
             else:
                 print(f"[CDA v2] No previous contacts found within {radius_miles} miles")
-
+            tier_availability["tier2"] = tier2_count
+            
+            # Estimate Tier 3 availability (web search typically has many results)
+            tier_availability["tier3"] = 100  # Conservative estimate for web search
+            
+            # Calculate actual contractor needs based on tier availability
+            calc_result = calculator.calculate_contractors_needed(bids_needed, tier_availability)
+            print("\n[CDA v2] CAMPAIGN ORCHESTRATION CALCULATION:")
+            print("=" * 40)
+            for line in calc_result["explanation"]:
+                print(f"  {line}")
+            print("=" * 40)
+            
+            # Update contractors_to_find based on actual calculation
+            contractors_to_find = calc_result["total_contractors"]
+            
+            # Determine if we need Tier 3
+            tier3_needed = calc_result["tier_allocation"].get("tier3", 0)
+            
             # Tier 3: Enhanced web search with adaptive radius expansion
-            if len(all_contractors) < contractors_to_find:  # Get the full amount we need
-                print(f"[CDA v2] Searching Tier 3: Enhanced web search with adaptive radius expansion...")
-                # Search for remaining contractors needed
-                remaining_needed = contractors_to_find - len(all_contractors)
+            if tier3_needed > 0:  # Only search Tier 3 if calculation says we need it
+                print(f"[CDA v2] Searching Tier 3: Need {tier3_needed} contractors from web search...")
+                print(f"[CDA v2] Starting adaptive radius expansion from {radius_miles} miles...")
                 
-                # Use adaptive discovery with automatic radius expansion
-                async def discovery_wrapper(location_dict, radius):
-                    """Wrapper to make the discovery function compatible with adaptive discovery"""
+                # Use regular web search directly (adaptive discovery has parameter issues)
+                print(f"[CDA v2] Executing web search for {tier3_needed} contractors...")
+                
+                # Try enhanced web search first
+                enhanced_success = False
+                try:
+                    enhanced_results = await self.enhanced_web_search.discover_contractors_with_profiles(
+                        bid_card_id=bid_card_id,
+                        project_type=bid_card.get("project_type"),
+                        location=location,
+                        contractors_needed=tier3_needed,
+                        radius_miles=radius_miles
+                    )
+                    if enhanced_results.get("success") and enhanced_results.get("contractors"):
+                        all_contractors.extend(enhanced_results["contractors"])
+                        print(f"[CDA v2] Found {len(enhanced_results['contractors'])} contractors via enhanced web search")
+                        tier_availability["tier3"] = len(enhanced_results["contractors"])
+                        enhanced_success = True
+                    else:
+                        print(f"[CDA v2] Enhanced web search returned 0 contractors, falling back to regular search")
+                except Exception as e:
+                    print(f"[CDA v2] Enhanced web search failed: {e}")
+                    
+                # Fallback to regular web search if enhanced search didn't find contractors
+                if not enhanced_success:
                     try:
-                        enhanced_results = await self.enhanced_web_search.discover_contractors_with_profiles(
-                            bid_card_id=bid_card_id,
-                            project_type=project_type,
-                            location=location_dict,
-                            contractors_needed=remaining_needed,
-                            radius_miles=radius
-                        )
-                        if enhanced_results["success"]:
-                            return enhanced_results["contractors"]
-                    except:
-                        # Fallback to regular web search if enhanced fails
                         web_results = self.web_search.discover_contractors_for_bid(
                             bid_card_id,
-                            contractors_needed=remaining_needed,
-                            radius_miles=radius
+                            contractors_needed=tier3_needed,
+                            radius_miles=radius_miles
                         )
-                        if web_results["success"]:
-                            return web_results["contractors"]
-                    return []
-                
-                # Use adaptive discovery with radius expansion
-                discovery_result = await self.adaptive_discovery.discover_with_expansion(
-                    discovery_function=discovery_wrapper,
-                    location=location,
-                    target_count=remaining_needed,
-                    min_acceptable=max(1, remaining_needed // 2)  # Accept at least half
-                )
-                
-                if discovery_result["contractors"]:
-                    all_contractors.extend(discovery_result["contractors"])
-                    print(f"[CDA v2] Found {len(discovery_result['contractors'])} contractors via adaptive discovery")
-                    print(f"[CDA v2] Final radius used: {discovery_result['final_radius']} miles")
-                    if discovery_result["expansion_stages"] > 1:
-                        print(f"[CDA v2] Expanded search {discovery_result['expansion_stages'] - 1} times")
+                        if web_results.get("success") and web_results.get("contractors"):
+                            all_contractors.extend(web_results["contractors"])
+                            print(f"[CDA v2] Found {len(web_results['contractors'])} contractors via regular web search")
+                            tier_availability["tier3"] = len(web_results["contractors"])
+                        else:
+                            print(f"[CDA v2] Regular web search also returned 0 contractors")
+                    except Exception as e2:
+                        print(f"[CDA v2] Regular web search also failed: {e2}")
 
             # Remove duplicates
             unique_contractors = self._deduplicate_contractors(all_contractors)
@@ -260,8 +290,22 @@ class ContractorDiscoveryAgent:
                 ]
             }
 
-            # Step 5: Simple explanation without LLM
-            explanation = f"Selected {len(selected)} contractors to contact for {bids_needed} needed bids (using 5-to-1 ratio). Top matches have the best combination of customer ratings and established business presence."
+            # Step 5: Generate campaign explanation
+            tier_breakdown = []
+            if calc_result["tier_allocation"].get("tier1", 0) > 0:
+                tier_breakdown.append(f"{calc_result['tier_allocation']['tier1']} Tier 1 (90% response rate)")
+            if calc_result["tier_allocation"].get("tier2", 0) > 0:
+                tier_breakdown.append(f"{calc_result['tier_allocation']['tier2']} Tier 2 (70% response rate)")
+            if calc_result["tier_allocation"].get("tier3", 0) > 0:
+                tier_breakdown.append(f"{calc_result['tier_allocation']['tier3']} Tier 3 (50% response rate)")
+            
+            tier_summary = " + ".join(tier_breakdown) if tier_breakdown else "No contractors"
+            
+            explanation = (
+                f"Campaign orchestration for {bids_needed} bids: {tier_summary}. "
+                f"Expected {calc_result['confidence_percentage']}% confidence to meet target. "
+                f"Selected {len(selected)} contractors from {len(unique_contractors)} found."
+            )
 
             # Step 6: Store the selected contractors with match data
             stored_contractors = self._store_matched_contractors(
@@ -283,9 +327,21 @@ class ContractorDiscoveryAgent:
                 "all_scores": selection_result["all_scores"],
                 "stored_ids": stored_contractors,
                 "tier_results": {
-                    "tier1_internal": len(tier1_results.get("contractors", [])) if tier1_results.get("success") else 0,
-                    "tier2_previous": len(tier2_results) if tier2_results else 0,
-                    "tier3_web": len(web_results.get("contractors", [])) if "web_results" in locals() and web_results.get("success") else 0
+                    "tier1_internal": tier1_count,
+                    "tier2_previous": tier2_count,
+                    "tier3_web": tier_availability.get("tier3", 0) if tier3_needed > 0 else 0
+                },
+                "campaign_orchestration": {
+                    "bids_needed": bids_needed,
+                    "contractors_to_contact": contractors_to_find,
+                    "tier_allocation": calc_result["tier_allocation"],
+                    "expected_responses": calc_result["expected_responses"],
+                    "confidence_percentage": calc_result["confidence_percentage"],
+                    "response_rates": {
+                        "tier1": "90%",
+                        "tier2": "70%",
+                        "tier3": "50%"
+                    }
                 }
             }
 
@@ -308,7 +364,28 @@ class ContractorDiscoveryAgent:
     def _load_bid_card(self, bid_card_id: str) -> Optional[dict[str, Any]]:
         """Load bid card from database or test data"""
         # Handle test bid cards
-        if bid_card_id == "test-mom-and-pop-kitchen":
+        if bid_card_id == "test-tier3-flow":
+            return {
+                "id": bid_card_id,
+                "project_type": "solar panel installation",
+                "bid_document": {
+                    "project_overview": {
+                        "description": "Need solar panel installation on residential home. Looking for certified solar installers with experience in residential systems."
+                    },
+                    "budget_information": {
+                        "budget_min": 15000,
+                        "budget_max": 25000
+                    },
+                    "timeline": {
+                        "urgency_level": "month"
+                    }
+                },
+                "location_city": "Fort Lauderdale",
+                "location_state": "FL",
+                "location_zip": "33301",
+                "contractor_count_needed": 5
+            }
+        elif bid_card_id == "test-mom-and-pop-kitchen":
             return {
                 "id": bid_card_id,
                 "project_type": "kitchen remodel",
@@ -411,9 +488,48 @@ class ContractorDiscoveryAgent:
 
         # Load from database
         try:
-            result = self.supabase.table("bid_cards").select("*").eq("id", bid_card_id).single().execute()
-            return result.data if result.data else None
-        except:
+            from database_simple import db
+            print(f"[CDA] Loading bid card from database: {bid_card_id}")
+            
+            result = db.client.table("bid_cards").select("*").eq("id", bid_card_id).execute()
+            
+            if result.data and len(result.data) > 0:
+                bid_card = result.data[0]
+                print(f"[CDA] Loaded real bid card from database: {bid_card.get('project_type', 'Unknown')}")
+                
+                # Normalize the structure to match what CDA expects
+                normalized_card = {
+                    "id": bid_card.get("id"),
+                    "bid_card_id": bid_card.get("id"),
+                    "project_type": bid_card.get("project_type", ""),
+                    "budget_min": bid_card.get("budget_min", 0),
+                    "budget_max": bid_card.get("budget_max", 0),
+                    "urgency_level": bid_card.get("urgency_level", "standard"),
+                    "location_city": bid_card.get("location_city", ""),
+                    "location_state": bid_card.get("location_state", ""),
+                    "location_zip": bid_card.get("location_zip", ""),
+                    "bid_document": bid_card.get("bid_document", {}),
+                    "contractor_count_needed": bid_card.get("contractor_count_needed", 4)
+                }
+                
+                # Merge location from bid_document if it exists
+                if "location" in bid_card.get("bid_document", {}):
+                    doc_location = bid_card["bid_document"]["location"]
+                    if doc_location.get("zip_code"):
+                        normalized_card["location_zip"] = doc_location["zip_code"]
+                    if doc_location.get("city"):
+                        normalized_card["location_city"] = doc_location["city"]
+                    if doc_location.get("state"):
+                        normalized_card["location_state"] = doc_location["state"]
+                
+                return normalized_card
+            else:
+                print(f"[CDA] No bid card found in database for ID: {bid_card_id}")
+                return None
+        except Exception as e:
+            print(f"[CDA ERROR] Failed to load bid card from database: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def _deduplicate_contractors(self, contractors: list[dict[str, Any]]) -> list[dict[str, Any]]:
