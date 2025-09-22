@@ -1,0 +1,162 @@
+name: Enhanced Conflict Summary
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  conflict-summary:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout PR
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+        
+    - name: Check for merge conflicts
+      id: check-conflicts
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Attempt merge to see if there are conflicts
+        if git merge origin/${{ github.base_ref }} --no-commit --no-ff; then
+          echo "No conflicts detected"
+          echo "has_conflicts=false" >> $GITHUB_OUTPUT
+          git reset --hard HEAD
+        else
+          echo "Conflicts detected"
+          echo "has_conflicts=true" >> $GITHUB_OUTPUT
+          
+          # Get detailed conflict information
+          CONFLICTED_FILES=$(git diff --name-only --diff-filter=U)
+          echo "conflicted_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CONFLICTED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Get conflict details for each file
+          CONFLICT_DETAILS=""
+          for file in $CONFLICTED_FILES; do
+            echo "=== Conflicts in $file ===" >> conflict_details.txt
+            git diff "$file" >> conflict_details.txt
+            echo "" >> conflict_details.txt
+          done
+          
+          # Reset merge state
+          git merge --abort
+        fi
+        
+    - name: Generate enhanced conflict summary
+      if: steps.check-conflicts.outputs.has_conflicts == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const conflictedFiles = `${{ steps.check-conflicts.outputs.conflicted_files }}`.split('\n').filter(f => f.trim());
+          
+          let conflictDetails = '';
+          try {
+            conflictDetails = fs.readFileSync('conflict_details.txt', 'utf8');
+          } catch (e) {
+            conflictDetails = 'Could not read conflict details';
+          }
+          
+          const summaryComment = `🚨 **MERGE CONFLICTS DETECTED**
+
+This pull request has merge conflicts that need to be resolved before it can be merged.
+
+## 📋 CRITICAL REQUIREMENTS FOR AI AGENT
+
+**YOU MUST RESOLVE ALL ${conflictedFiles.length} CONFLICTED FILES COMPLETELY**
+
+### 🎯 Resolution Format Required
+
+For each conflicted file, provide a \`resolved:\` block with the COMPLETE file content:
+
+\`\`\`resolved:path/to/file.py
+[COMPLETE FILE CONTENT HERE - including all code, imports, functions, etc.]
+\`\`\`
+
+### 📁 Files Requiring Resolution (${conflictedFiles.length} total)
+
+${conflictedFiles.map((file, index) => `${index + 1}. **\`${file}\`** ❌ **MUST BE RESOLVED**`).join('\n')}
+
+### ⚠️ IMPORTANT INSTRUCTIONS
+
+1. **COMPLETE RESOLUTION REQUIRED**: Each \`resolved:\` block must contain the ENTIRE file content, not just the conflicted sections
+2. **ALL FILES MUST BE ADDRESSED**: Do not stop until you have provided \`resolved:\` blocks for ALL ${conflictedFiles.length} files listed above
+3. **NO PARTIAL SOLUTIONS**: The system will validate that all files are resolved before proceeding
+4. **MERGE CONFLICT MARKERS**: Remove all \`<<<<<<<\`, \`=======\`, and \`>>>>>>>\` markers
+5. **TEST YOUR RESOLUTION**: Ensure the resolved code is syntactically correct and functional
+
+### 🔍 Conflict Details
+
+<details>
+<summary>Click to view detailed conflict information</summary>
+
+\`\`\`diff
+${conflictDetails}
+\`\`\`
+
+</details>
+
+### 🤖 AI Agent Workflow
+
+1. **Analyze each conflicted file carefully**
+2. **Understand the competing changes from both branches**
+3. **Decide how to merge the changes logically**
+4. **Provide a \`resolved:\` block for EACH file with complete content**
+5. **Double-check that all ${conflictedFiles.length} files are addressed**
+
+**⚡ Once you provide complete resolutions for all files, the system will automatically apply them and merge the PR.**
+
+---
+*This summary was generated to ensure complete conflict resolution. The AI agent must resolve ALL conflicted files before the PR can proceed.*`;
+
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: summaryComment
+          });
+          
+    - name: Add merge conflict label
+      if: steps.check-conflicts.outputs.has_conflicts == 'true'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            labels: ['merge-conflict', 'needs-ai-resolution']
+          });
+          
+    - name: Remove conflict labels if resolved
+      if: steps.check-conflicts.outputs.has_conflicts == 'false'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          try {
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'merge-conflict'
+            });
+          } catch (e) {
+            console.log('merge-conflict label not found');
+          }
+          
+          try {
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              name: 'needs-ai-resolution'
+            });
+          } catch (e) {
+            console.log('needs-ai-resolution label not found');
+          }

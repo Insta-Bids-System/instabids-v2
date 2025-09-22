@@ -17,7 +17,7 @@ import DatabaseViewer from "./DatabaseViewer";
 import SystemMetrics from "./SystemMetrics";
 import EnhancedSearchPanel from "./EnhancedSearchPanel";
 import ContractorManagement from "./ContractorManagement";
-import CampaignManagement from "./CampaignManagement";
+import CampaignManager from "./CampaignManager";
 import EnhancedAgentMonitoring from "./EnhancedAgentMonitoring";
 import ConnectionFeesManagement from "./ConnectionFeesManagement";
 // import SubmittedProposalsTab from "./SubmittedProposalsTab";
@@ -370,7 +370,7 @@ const MainDashboard: React.FC = () => {
 
           {selectedTab === "connection-fees" && <ConnectionFeesManagement />}
 
-          {selectedTab === "campaigns" && <CampaignManagement />}
+          {selectedTab === "campaigns" && <CampaignManager />}
 
           {selectedTab === "search" && <EnhancedSearchPanel />}
 

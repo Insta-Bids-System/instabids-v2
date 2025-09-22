@@ -193,7 +193,17 @@ class WebSearchContractorAgent:
                 }
 
             # Check if this is another test scenario
-            if bid_card_id == "test-solar-project":
+            if bid_card_id == "test-tier3-flow":
+                return {
+                    "project_type": "solar panel installation",
+                    "location": {
+                        "full_location": "Fort Lauderdale, FL 33301",
+                        "city": "Fort Lauderdale",
+                        "state": "FL",
+                        "zip_code": "33301"
+                    }
+                }
+            elif bid_card_id == "test-solar-project":
                 return {
                     "project_type": "solar panel installation",
                     "location": {
@@ -886,12 +896,27 @@ class WebSearchContractorAgent:
                     "match_score": contractor.match_score
                 }
 
-                # Insert into database
-                result = self.supabase.table("potential_contractors").insert(contractor_data).execute()
-
-                if result.data:
-                    stored_contractors.append(result.data[0])
-                    print(f"[WebSearchAgent] Stored: {contractor.company_name}")
+                # Insert into database with duplicate handling
+                try:
+                    result = self.supabase.table("potential_contractors").insert(contractor_data).execute()
+                    if result.data:
+                        stored_contractors.append(result.data[0])
+                        print(f"[WebSearchAgent] Stored: {contractor.company_name}")
+                except Exception as insert_error:
+                    # Handle duplicate key constraint - contractor already exists
+                    if "duplicate key" in str(insert_error) and "google_place_id" in str(insert_error):
+                        print(f"[WebSearchAgent] Contractor already exists: {contractor.company_name}")
+                        # Fetch existing contractor record
+                        try:
+                            existing = self.supabase.table("potential_contractors").select("*").eq("google_place_id", contractor.google_place_id).execute()
+                            if existing.data:
+                                stored_contractors.append(existing.data[0])
+                                print(f"[WebSearchAgent] Retrieved existing: {contractor.company_name}")
+                        except Exception as fetch_error:
+                            print(f"[WebSearchAgent] Could not fetch existing contractor: {fetch_error}")
+                    else:
+                        # Re-raise unexpected errors
+                        raise insert_error
 
             print(f"[WebSearchAgent] Successfully stored {len(stored_contractors)} contractors")
             return stored_contractors

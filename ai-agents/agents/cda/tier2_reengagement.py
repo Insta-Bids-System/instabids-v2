@@ -53,17 +53,15 @@ class Tier2Reengagement:
             print(f"[Tier2] Searching outreach history since {six_months_ago.strftime('%Y-%m-%d')} within {radius_miles} miles of {zip_code}")
 
             # Query contractor outreach history
-            query = self.supabase.table("contractor_outreach").select("""
+            query = self.supabase.table("contractor_outreach_attempts").select("""
                 *,
-                contractors:contractor_id (*)
+                contractor_leads:contractor_lead_id (*)
             """)
 
             # Apply filters
-            query = query.gte("outreach_date", six_months_iso)
-            query = query.neq("response_status", "permanently_declined")
-            query = query.gte("project_match_score", 0.7)
-            query = query.order("project_match_score", desc=True)
-            query = query.order("outreach_date", desc=True)
+            query = query.gte("sent_at", six_months_iso)
+            query = query.neq("status", "opted_out")
+            query = query.order("sent_at", desc=True)
 
             result = query.execute()
             outreach_records = result.data if result.data else []
@@ -75,12 +73,12 @@ class Tier2Reengagement:
             seen_contractors = set()
 
             for record in outreach_records:
-                contractor_id = record.get("contractor_id")
-                if not contractor_id or contractor_id in seen_contractors:
+                contractor_lead_id = record.get("contractor_lead_id")
+                if not contractor_lead_id or contractor_lead_id in seen_contractors:
                     continue
 
-                seen_contractors.add(contractor_id)
-                contractor = record.get("contractors")
+                seen_contractors.add(contractor_lead_id)
+                contractor = record.get("contractor_leads")
 
                 if not contractor:
                     continue
@@ -97,11 +95,10 @@ class Tier2Reengagement:
                     contractor["discovery_tier"] = 2
                     contractor["match_score"] = reengagement_score
                     contractor["reengagement_data"] = {
-                        "last_contact": record["outreach_date"],
-                        "last_response": record["response_status"],
-                        "previous_match_score": record["project_match_score"],
-                        "contact_method": record["contact_method"],
-                        "notes": record.get("notes", "")
+                        "last_contact": record.get("sent_at"),
+                        "last_response": record.get("status"),
+                        "contact_method": record.get("channel"),
+                        "response_content": record.get("response_content", "")
                     }
                     contractor["match_reasons"] = self._get_reengagement_reasons(record, contractor, bid_data)
 
@@ -167,24 +164,29 @@ class Tier2Reengagement:
         """Calculate re-engagement viability score"""
         score = 0.0
 
-        # Base score from previous project match
-        previous_match = float(outreach_record.get("project_match_score", 0))
-        score += previous_match * 50  # Max 50 points from previous match
+        # Base score (default 50 points for any previous contact)
+        score += 50  
 
         # Response history bonus
-        response_status = outreach_record.get("response_status", "")
-        if response_status == "interested":
-            score += 30  # They were interested before
-        elif response_status == "pending":
-            score += 15  # No response, but not declined
-        elif response_status == "declined":
-            score += 5   # Declined but not permanently
+        status = outreach_record.get("status", "")
+        if status == "delivered" and outreach_record.get("response_content"):
+            score += 30  # They responded
+        elif status == "delivered":
+            score += 15  # Delivered but no response
+        elif status == "sent":
+            score += 10  # At least sent successfully
+
+        # Engagement bonus
+        if outreach_record.get("opened_at"):
+            score += 10  # They opened the message
+        if outreach_record.get("clicked_at"):
+            score += 15  # They clicked links
 
         # Recency bonus (more recent = better)
-        outreach_date_str = outreach_record.get("outreach_date", "")
+        sent_at_str = outreach_record.get("sent_at", "")
         try:
-            outreach_date = datetime.fromisoformat(outreach_date_str.replace("Z", "+00:00"))
-            days_ago = (datetime.now() - outreach_date.replace(tzinfo=None)).days
+            sent_at = datetime.fromisoformat(sent_at_str.replace("Z", "+00:00"))
+            days_ago = (datetime.now() - sent_at.replace(tzinfo=None)).days
 
             if days_ago <= 30:
                 score += 15  # Very recent
@@ -196,10 +198,10 @@ class Tier2Reengagement:
             pass
 
         # Contact method preference
-        contact_method = outreach_record.get("contact_method", "")
-        if contact_method == "phone":
+        channel = outreach_record.get("channel", "")
+        if channel == "phone":
             score += 5  # Phone contact shows more engagement
-        elif contact_method == "email":
+        elif channel == "email":
             score += 3  # Email is good
 
         return min(100.0, max(0.0, score))
@@ -209,24 +211,23 @@ class Tier2Reengagement:
         reasons = []
 
         # Previous response
-        response_status = outreach_record.get("response_status", "")
-        if response_status == "interested":
-            reasons.append("Previously expressed interest")
-        elif response_status == "pending":
-            reasons.append("Previous contact with no negative response")
+        status = outreach_record.get("status", "")
+        if status == "delivered" and outreach_record.get("response_content"):
+            reasons.append("Previously responded to outreach")
+        elif status == "delivered":
+            reasons.append("Previous message delivered successfully")
 
-        # Match score
-        previous_match = float(outreach_record.get("project_match_score", 0))
-        if previous_match >= 0.8:
-            reasons.append("High previous project match (80%+)")
-        elif previous_match >= 0.7:
-            reasons.append("Good previous project match (70%+)")
+        # Engagement
+        if outreach_record.get("opened_at"):
+            reasons.append("Opened previous messages")
+        if outreach_record.get("clicked_at"):
+            reasons.append("Clicked links in previous messages")
 
         # Timing
-        outreach_date_str = outreach_record.get("outreach_date", "")
+        sent_at_str = outreach_record.get("sent_at", "")
         try:
-            outreach_date = datetime.fromisoformat(outreach_date_str.replace("Z", "+00:00"))
-            days_ago = (datetime.now() - outreach_date.replace(tzinfo=None)).days
+            sent_at = datetime.fromisoformat(sent_at_str.replace("Z", "+00:00"))
+            days_ago = (datetime.now() - sent_at.replace(tzinfo=None)).days
 
             if days_ago <= 30:
                 reasons.append("Recent contact (within 30 days)")
@@ -236,10 +237,10 @@ class Tier2Reengagement:
             pass
 
         # Contact quality
-        notes = outreach_record.get("notes", "")
-        if "interested" in notes.lower():
+        response_content = outreach_record.get("response_content", "")
+        if response_content and "interested" in response_content.lower():
             reasons.append("Showed interest in previous communication")
-        if "busy" in notes.lower():
+        if response_content and "busy" in response_content.lower():
             reasons.append("Was busy but may be available now")
 
         # Location with distance
@@ -270,7 +271,7 @@ class Tier2Reengagement:
                 "notes": notes
             }
 
-            result = self.supabase.table("contractor_outreach").insert(record).execute()
+            result = self.supabase.table("contractor_outreach_attempts").insert(record).execute()
             return bool(result.data)
 
         except Exception as e:

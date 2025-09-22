@@ -98,8 +98,9 @@ async def _find_matching_project_type(
     try:
         # Check for direct keyword matches first
         description_lower = description.lower()
+        combined_text = f"{description} {context}".lower()
         
-        # Common mappings
+        # Common mappings - CHECK THESE FIRST BEFORE GPT-4o
         direct_mappings = {
             "toilet repair": 122,  # Toilet Repair ID
             "toilet leak": 122,
@@ -114,15 +115,52 @@ async def _find_matching_project_type(
             "bathroom remodel": 89,  # Bathroom Remodel
             "lawn care": 156,  # Lawn Care
             "lawn maintenance": 156,
+            # Roofing mappings - COMPREHENSIVE
+            "roof replacement": 430,  # Roof Installation ID
+            "roof install": 430,
+            "new roof": 430,
+            "complete roof": 430,
+            "roof shingle": 430,
+            "shingle installation": 430,
+            "shingle roof": 430,
+            "architectural shingle": 430,
+            "replace shingle": 430,
+            "roof repair": 146,  # Roof Repair ID
+            "roof leak": 146,
+            "roof damage": 146,
+            "roof cleaning": 291,  # Roof Cleaning Service ID
         }
         
-        # Check direct mappings
+        # Check direct mappings in BOTH description and context
+        # Use longest match first to get most specific match
+        matches_found = []
+        keyword_matches = []
+        
         for keyword, project_id in direct_mappings.items():
-            if keyword in description_lower:
+            if keyword in combined_text:
+                keyword_matches.append((keyword, project_id))
+                found_in_types = False
                 for pt in project_types:
                     if pt['id'] == project_id:
-                        logger.info(f"Direct match found: {pt['name']} for keyword '{keyword}'")
-                        return pt
+                        matches_found.append((len(keyword), keyword, pt))
+                        found_in_types = True
+                        break
+                if not found_in_types:
+                    logger.warning(f"Keyword '{keyword}' matched but project_id {project_id} not found in project_types")
+        
+        if keyword_matches:
+            logger.info(f"Keywords matched: {keyword_matches}")
+        
+        # Sort by length (longest first) to get most specific match
+        if matches_found:
+            matches_found.sort(reverse=True, key=lambda x: x[0])
+            best_match = matches_found[0]
+            logger.info(f"DIRECT MATCH OVERRIDE: {best_match[2]['name']} (ID: {best_match[2]['id']}) for keyword '{best_match[1]}'")
+            # Return immediately - don't let GPT-4o override
+            return best_match[2]
+        elif keyword_matches:
+            # We matched keywords but didn't find project types - this is a problem
+            logger.error(f"CRITICAL: Matched keywords {keyword_matches} but project types not in database!")
         
         # If no direct match, use GPT-4o
         system_prompt = """You are a construction project categorization expert for InstaBids.

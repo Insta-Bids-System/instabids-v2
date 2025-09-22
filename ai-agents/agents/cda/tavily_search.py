@@ -137,32 +137,58 @@ class TavilySearchTool:
                             {"critical": 4, "high": 3, "medium": 2, "low": 1}.get(x.get("priority", "low"), 1),
                             x.get("has_contact_info", False),
                             x.get('score', 0)
-                        ), reverse=True)[:4]
+                        ), reverse=True)[:5]
         
-        for page in top_urls:
-            url = page["url"]
-            try:
-                # Extract full content
-                extract_response = client.extract(
-                    url,
-                    extract_depth="advanced",
-                    format="markdown"
-                )
-                
-                if extract_response and 'results' in extract_response:
-                    for extract_result in extract_response['results']:
-                        if extract_result.get('url') == url:
-                            full_content = extract_result.get('raw_content', '')[:2000]
-                            page["full_content"] = full_content
-                            logger.info(f"Extracted {len(full_content)} chars from {url}")
-                            break
-                
-            except Exception as extract_error:
-                logger.warning(f"Extract API error for {url}: {extract_error}")
-                continue
+        # Collect URLs to extract
+        urls_to_extract = [page["url"] for page in top_urls]
+        
+        try:
+            # Extract full content from all URLs at once (more efficient)
+            logger.info(f"Extracting content from {len(urls_to_extract)} URLs: {urls_to_extract}")
+            extract_response = client.extract(
+                urls=urls_to_extract
+            )
             
-            # Rate limiting
-            await asyncio.sleep(2)
+            if extract_response and 'results' in extract_response:
+                logger.info(f"Got {len(extract_response['results'])} results from Extract API")
+                
+                # Map extracted content back to pages
+                for extract_result in extract_response['results']:
+                    extracted_url = extract_result.get('url', '')
+                    raw_content = extract_result.get('raw_content', '')
+                    
+                    # Find matching page in discovery_data
+                    for page in discovery_data["discovered_pages"]:
+                        if page["url"] == extracted_url:
+                            # Store the FULL raw content, not truncated
+                            page["full_content"] = raw_content
+                            # Also update the main content field with more text
+                            page["content"] = raw_content[:5000] if raw_content else page.get("content", "")
+                            logger.info(f"Extracted {len(raw_content)} chars from {extracted_url}")
+                            break
+            else:
+                logger.warning(f"No results from Extract API for URLs: {urls_to_extract}")
+                    
+        except Exception as extract_error:
+            logger.error(f"Extract API error: {extract_error}")
+            # Fall back to extracting one by one if batch fails
+            for page in top_urls:
+                url = page["url"]
+                try:
+                    extract_response = client.extract(urls=[url])
+                    if extract_response and 'results' in extract_response:
+                        for extract_result in extract_response['results']:
+                            raw_content = extract_result.get('raw_content', '')
+                            page["full_content"] = raw_content
+                            page["content"] = raw_content[:5000] if raw_content else page.get("content", "")
+                            logger.info(f"Extracted {len(raw_content)} chars from {url}")
+                            break
+                except Exception as single_error:
+                    logger.warning(f"Extract API error for {url}: {single_error}")
+                    continue
+                
+                # Rate limiting between individual requests
+                await asyncio.sleep(1)
 
     def _categorize_page_type(self, url: str, title: str) -> str:
         """Helper to categorize page types"""
